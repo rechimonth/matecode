@@ -54,6 +54,18 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
     if (task.userId) await refreshTasks(task.userId);
   };
 
+  const reorderTask = async (activeId: string, overId: string) => {
+    const fromIndex = tasks.findIndex((t) => t.id === activeId);
+    const toIndex = tasks.findIndex((t) => t.id === overId);
+    if (fromIndex === -1 || toIndex === -1) return;
+    const newTasks = [...tasks];
+    const [moved] = newTasks.splice(fromIndex, 1);
+    newTasks.splice(toIndex, 0, moved);
+    setTasks(newTasks);
+    const userTask = tasks.find((t) => t.id === activeId);
+    if (userTask?.userId) await refreshTasks(userTask.userId);
+  };
+
   const clearError = () => setError(null);
 
   const filteredTasks = tasks.filter((_task) => {
@@ -68,7 +80,7 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user?.uid, refreshTasks]);
 
   return (
-    <TasksContext.Provider value={{ tasks: filteredTasks, loading, error, filters: { status: statusFilter }, setStatusFilter, addTask, updateTask, deleteTask, toggleTaskStatus, clearError }}>
+    <TasksContext.Provider value={{ tasks: filteredTasks, loading, error, filters: { status: statusFilter }, setStatusFilter, addTask, updateTask, deleteTask, toggleTaskStatus, clearError, reorderTask }}>
       {children}
     </TasksContext.Provider>
   );

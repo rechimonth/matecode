@@ -8,6 +8,8 @@ export const TodoForm = ({ initialTask, onCancel }: { initialTask?: Task; onCanc
   const { addTask, updateTask } = useTasks();
   const [title, setTitle] = useState(initialTask?.title || "");
   const [description, setDescription] = useState(initialTask?.description || "");
+  const [dueDate, setDueDate] = useState(initialTask?.dueDate ? new Date(initialTask.dueDate).toISOString().split("T")[0] : "");
+  const [priority, setPriority] = useState<Task["priority"]>(initialTask?.priority || "medium");
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,17 +22,26 @@ export const TodoForm = ({ initialTask, onCancel }: { initialTask?: Task; onCanc
     }
     try {
       if (initialTask) {
-        await updateTask(initialTask.id, { title, description });
+        await updateTask(initialTask.id, {
+          title,
+          description,
+          ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
+          priority,
+        });
       } else {
         await addTask({
           title,
           description,
           status: "pending",
           userId: user.uid,
+          ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
+          priority,
         });
       }
       setTitle("");
       setDescription("");
+      setDueDate("");
+      setPriority("medium");
       onCancel?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al guardar la tarea";
@@ -50,6 +61,20 @@ export const TodoForm = ({ initialTask, onCancel }: { initialTask?: Task; onCanc
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
           <textarea className="input" name="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Detalles de la tarea..." rows={3} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de vencimiento</label>
+            <input className="input" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
+            <select className="input" value={priority} onChange={(e) => setPriority(e.target.value as Task["priority"])}>
+              <option value="low">Baja</option>
+              <option value="medium">Media</option>
+              <option value="high">Alta</option>
+            </select>
+          </div>
         </div>
         <div className="flex gap-3">
           <button type="submit" className="btn btn-primary">

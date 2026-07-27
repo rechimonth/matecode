@@ -9,12 +9,6 @@ export default defineConfig({
     conditions: ["browser"],
     alias: [
       { find: "@", replacement: path.resolve(__dirname, "./src") },
-      ...(process.env.NODE_ENV === "test"
-        ? [
-            { find: /^firebase\/(.*)$/, replacement: path.resolve(__dirname, "tests/mocks/firebase-stub.ts") },
-            { find: /^@firebase\/(.*)$/, replacement: path.resolve(__dirname, "tests/mocks/firebase-stub.ts") },
-          ]
-        : []),
     ],
   },
   optimizeDeps: {

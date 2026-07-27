@@ -114,9 +114,12 @@ npm run test
 ```
 
 Se incluyen:
-- Tests unitarios de utilidades (`tests/validators.test.ts`)
-- Tests de componentes con React Testing Library (`tests/TodoForm.test.tsx`)
-- Mocks de servicios externos según corresponda
+- Tests unitarios de validadores (`tests/validators.test.ts`)
+- Tests de servicios externos (`tests/services/auth.test.ts`, `tests/services/tasks.test.ts`)
+- Tests de contextos (`tests/AuthContext.test.tsx`, `tests/TasksContext.test.tsx`)
+- Tests de componentes (`tests/components/EmailButton.test.tsx`, `tests/components/Header.test.tsx`, `tests/components/TaskFilters.test.tsx`, `tests/TodoForm.test.tsx`)
+- Tests de páginas (`tests/pages/LoginPage.test.tsx`, `tests/pages/RegisterPage.test.tsx`)
+- Tests de rutas (`tests/ProtectedRoute.test.tsx`)
 
 ## Seguridad
 
@@ -144,7 +147,17 @@ Utilicé IA para acelerar la generación de código boilerplate y sugerencias de
 2. Importar el repositorio en [Vercel](https://vercel.com).
 3. Configurar variables de entorno en Vercel (Firebase + AWS SES).
 4. Verificar que la función `/api/send-summary` tenga acceso a las variables de AWS.
-5. Actualizar este README con la URL final.
+5. URL de producción: https://matecode-q4o0b150h-rechimonths-projects.vercel.app
+
+## Checklist de Validación
+
+- [ ] `npm run build` pasa sin errores
+- [ ] `npm run lint` pasa sin warnings
+- [ ] `npm run test` pasa con tests nuevos
+- [ ] App funcional en Vercel con URL pública
+- [ ] Auth, CRUD, filtros, drag & drop y email funcionan
+- [ ] `.env` excluido del repo
+- [ ] Reglas de Firestore deployadas
 
 ## Licencia
 

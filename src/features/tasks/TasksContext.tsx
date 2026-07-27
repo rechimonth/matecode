@@ -54,16 +54,10 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
     if (task.userId) await refreshTasks(task.userId);
   };
 
-  const reorderTask = async (activeId: string, overId: string) => {
-    const fromIndex = tasks.findIndex((t) => t.id === activeId);
-    const toIndex = tasks.findIndex((t) => t.id === overId);
-    if (fromIndex === -1 || toIndex === -1) return;
-    const newTasks = [...tasks];
-    const [moved] = newTasks.splice(fromIndex, 1);
-    newTasks.splice(toIndex, 0, moved);
-    setTasks(newTasks);
+  const reorderTask = async (activeId: string, _overId: string) => {
     const userTask = tasks.find((t) => t.id === activeId);
-    if (userTask?.userId) await refreshTasks(userTask.userId);
+    if (!userTask?.userId) return;
+    await refreshTasks(userTask.userId);
   };
 
   const clearError = () => setError(null);

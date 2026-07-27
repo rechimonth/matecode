@@ -147,7 +147,7 @@ Utilicé IA para acelerar la generación de código boilerplate y sugerencias de
 2. Importar el repositorio en [Vercel](https://vercel.com).
 3. Configurar variables de entorno en Vercel (Firebase + AWS SES).
 4. Verificar que la función `/api/send-summary` tenga acceso a las variables de AWS.
-5. URL de producción: https://matecode-q4o0b150h-rechimonths-projects.vercel.app
+5. URL de producción: https://matecode-n5pccoo2a-rechimonths-projects.vercel.app
 
 ## Checklist de Validación
 

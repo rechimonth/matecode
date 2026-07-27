@@ -11,7 +11,8 @@ coverage
 *.log
 .DS_Store
 Thumbs.db
-PROJECT_CONTEXT.md
 
 .vercel
 .env*
+
+.kilo/

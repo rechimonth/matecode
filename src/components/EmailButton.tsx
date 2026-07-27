@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { useAuth } from "../features/auth/AuthContext";
 import { useTasks } from "../features/tasks/TasksContext";
-import { Task } from "../types";
-
+import { useAuth } from "../features/auth/AuthContext";
 export const EmailButton = () => {
-  const { user } = useAuth();
   const { tasks } = useTasks();
+  const { user } = useAuth();
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +21,7 @@ export const EmailButton = () => {
         body: JSON.stringify({
           email: user.email,
           name: user.displayName,
-          tasks: tasks.map((t: Task) => ({
+          tasks: tasks.map((t) => ({
             title: t.title,
             status: t.status,
             updatedAt: t.updatedAt.toISOString(),

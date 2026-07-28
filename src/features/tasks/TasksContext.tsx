@@ -68,10 +68,30 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   useEffect(() => {
-    if (user?.uid) {
-      refreshTasks(user.uid);
-    }
-  }, [user?.uid, refreshTasks]);
+    if (!user?.uid) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getTasksByUser(user.uid);
+        if (!cancelled) setTasks(data);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Error al cargar tareas";
+        if (!cancelled) setError(message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
 
   return (
     <TasksContext.Provider value={{ tasks: filteredTasks, loading, error, filters: { status: statusFilter }, setStatusFilter, addTask, updateTask, deleteTask, toggleTaskStatus, clearError, reorderTask }}>

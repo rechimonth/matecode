@@ -1,11 +1,13 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./features/auth/AuthContext";
 import { TasksProvider } from "./features/tasks/TasksContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { TasksPage } from "./pages/TasksPage";
-import { NotFoundPage } from "./pages/NotFoundPage";
+
+const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({ default: m.RegisterPage })));
+const TasksPage = lazy(() => import("./pages/TasksPage").then(m => ({ default: m.TasksPage })));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
 const AppRoutes = () => (
   <Routes>
@@ -21,7 +23,9 @@ const App = () => (
   <BrowserRouter>
     <AuthProvider>
       <TasksProvider>
-        <AppRoutes />
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><p className="text-gray-600">Cargando...</p></div>}>
+          <AppRoutes />
+        </Suspense>
       </TasksProvider>
     </AuthProvider>
   </BrowserRouter>

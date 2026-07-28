@@ -16,3 +16,5 @@ Thumbs.db
 .env*
 
 .kilo/
+
+.PROJECT_CONTEXT.md

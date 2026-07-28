@@ -54,14 +54,32 @@ api/
 | `npm run test:watch` | Vitest watch mode |
 
 ## Test Accounts
-- **Email/Password**: `pruebametacode@gmail.com` / `con12345678` (funciona en local y producciÃ³n)
+- **Email/Password**: `pruebametacode@gmail.com` / `con12345678` (funciona en local y producción)
 
 ## Environment
 - `.env` (gitignored): Firebase config + `VITE_API_URL`
-- Vercel env vars: Firebase + `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SES_FROM_EMAIL`
+- Vercel env vars:
+  - Frontend: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_API_URL`
+  - Backend (API route): `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SES_FROM_EMAIL`, `SES_CONFIGURATION_SET`, `ALLOWED_ORIGINS`
+
+## SES Configuration
+- Email verificado: `pruebametacode@gmail.com` en región `sa-east-1`.
+- La función `api/send-summary.ts` incluye rate limiting por IP y validación de origen.
+- Para manejo de bounces/complaints, crear un **Configuration Set** en SES Console y agregar un destino SNS:
+  1. SES Console ? `sa-east-1` ? **Configuration Sets** ? **Create configuration set** ? nombre: `matecode-production`.
+  2. Agregar un **Event destination** tipo **SNS** para eventos `BOUNCE` y `COMPLAINT`.
+  3. Crear un topic SNS (ej: `ses-bounces`) y suscribir un endpoint (email o Lambda).
+  4. Copiar el nombre del configuration set a la variable de entorno `SES_CONFIGURATION_SET` en Vercel.
+
+## Firestore Rules
+- Reglas actuales en `firestore.rules`:
+  - Solo usuarios autenticados pueden leer/escribir tareas.
+  - `userId` del documento debe coincidir con `request.auth.uid`.
 
 ## Current Status
 - Build and lint pass.
-- All 53 tests pass (contexts, components, pages, services, validators).
-- `vercel.json` configured with `/api/*` rewrites.
-- `TodoItem.tsx` removed (unused).
+- All 57 tests pass (14 test files).
+- `vercel.json` configured with SPA fallback (`/(.*) -> /index.html`).
+- `AuthContext` handlers no longer throw errors; they set error state only.
+- `ProtectedRoute.test.tsx` fixed with `vi.doMock` + dynamic import pattern.
+- Rate limiting and origin validation added to `api/send-summary.ts`.

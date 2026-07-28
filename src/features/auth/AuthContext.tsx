@@ -25,9 +25,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null);
       await login(email, password);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al iniciar sesiÃ³n";
+      const message = err instanceof Error ? err.message : "Error al iniciar sesión";
       setError(message);
-      throw err;
     }
   };
 
@@ -38,7 +37,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al registrar usuario";
       setError(message);
-      throw err;
     }
   };
 
@@ -49,7 +47,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error con Google Login";
       setError(message);
-      throw err;
     }
   };
 
@@ -58,9 +55,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null);
       await logout();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al cerrar sesiÃ³n";
+      const message = err instanceof Error ? err.message : "Error al cerrar sesión";
       setError(message);
-      throw err;
     }
   };
 

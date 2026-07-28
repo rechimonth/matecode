@@ -1,57 +1,75 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
-import { BrowserRouter } from "react-router-dom";
-import { ProtectedRoute } from "../src/routes/ProtectedRoute";
+import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter, createMemoryRouter, RouterProvider } from "react-router-dom";
 
 vi.mock("../src/features/auth/AuthContext", () => ({
   useAuth: vi.fn(),
 }));
 
 import { useAuth } from "../src/features/auth/AuthContext";
+import { ProtectedRoute } from "../src/routes/ProtectedRoute";
 
-const mockedUseAuth = useAuth as unknown as ReturnType<typeof vi.fn>;
+const mockUseAuth = vi.mocked(useAuth) as ReturnType<typeof vi.fn>;
 
 describe("ProtectedRoute", () => {
-  it("shows spinner when loading is true", () => {
-    mockedUseAuth.mockReturnValue({ user: null, loading: true, error: null });
-
-    render(
-      <BrowserRouter>
-        <ProtectedRoute>
-          <div>Private Content</div>
-        </ProtectedRoute>
-      </BrowserRouter>
-    );
-
-    expect(screen.getByRole("status")).toBeTruthy();
+  beforeEach(() => {
+    mockUseAuth.mockReset();
   });
 
-  it("redirects to login when user is null", () => {
-    mockedUseAuth.mockReturnValue({ user: null, loading: false, error: null });
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("shows spinner when loading is true", () => {
+    mockUseAuth.mockReturnValue({ user: null, loading: true, error: null });
 
     render(
-      <BrowserRouter>
+      <MemoryRouter>
         <ProtectedRoute>
           <div>Private Content</div>
         </ProtectedRoute>
-      </BrowserRouter>
+      </MemoryRouter>
     );
 
-    expect(screen.queryByText("Private Content")).toBeNull();
+    expect(document.querySelector(".animate-spin")).toBeTruthy();
   });
 
   it("renders children when user is authenticated", () => {
-    mockedUseAuth.mockReturnValue({ user: { uid: "1", email: "a@b.com" }, loading: false, error: null });
+    mockUseAuth.mockReturnValue({ user: { uid: "1", email: "a@b.com" }, loading: false, error: null });
 
     render(
-      <BrowserRouter>
+      <MemoryRouter>
         <ProtectedRoute>
           <div>Private Content</div>
         </ProtectedRoute>
-      </BrowserRouter>
+      </MemoryRouter>
     );
 
     expect(screen.getByText("Private Content")).toBeTruthy();
+  });
+
+  it("redirects to login when user is null", () => {
+    mockUseAuth.mockReturnValue({ user: null, loading: false, error: null });
+
+    const router = createMemoryRouter([
+      {
+        path: "/",
+        element: (
+          <ProtectedRoute>
+            <div>Private Content</div>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/login",
+        element: <div>Login Page</div>,
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(screen.queryByText("Private Content")).toBeNull();
+    expect(screen.getByText("Login Page")).toBeTruthy();
   });
 });

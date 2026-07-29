@@ -4,7 +4,7 @@ import { Task } from "../types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DeleteButton } from "./DeleteButton";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, CheckCheck } from "lucide-react";
 
 interface TaskItemProps {
   task: Task;
@@ -70,10 +70,11 @@ export const TaskItem = ({ task }: TaskItemProps) => {
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={handleToggleComplete}
+          onClick={isCompleted ? undefined : handleToggleComplete}
+          onDoubleClick={isCompleted ? handleToggleComplete : undefined}
           disabled={loading}
           aria-pressed={isCompleted}
-          aria-label={isCompleted ? "Marcar tarea como pendiente" : "Marcar tarea como completada"}
+          aria-label={isCompleted ? "Doble clic para desmarcar como pendiente" : "Marcar tarea como completada"}
           className={`
             btn text-xs font-medium px-3 py-2 rounded-md transition-all duration-150 ease-in-out
             focus:outline-none focus:ring-2 focus:ring-offset-2 inline-flex items-center gap-1.5
@@ -87,7 +88,7 @@ export const TaskItem = ({ task }: TaskItemProps) => {
         >
           {isCompleted ? (
             <>
-              <CheckCircle2 className="w-4 h-4" />
+              <CheckCheck className="w-4 h-4" />
               Completada
             </>
           ) : (

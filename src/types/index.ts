@@ -12,21 +12,29 @@ export interface Task {
   priority?: "low" | "medium" | "high";
 }
 
-export interface User {
+export interface AppUser {
   uid: string;
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  providerData: Array<{
+    providerId: string;
+    uid: string;
+    displayName: string | null;
+    email: string | null;
+    photoURL: string | null;
+  }>;
 }
 
 export interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   loading: boolean;
   error: string | null;
   login: (_email: string, _password: string) => Promise<void>;
   register: (_email: string, _password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  linkPassword: (_password: string) => Promise<void>;
   clearError: () => void;
 }
 

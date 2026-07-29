@@ -9,23 +9,46 @@ declare module "firebase/auth" {
   export function signInWithPopup(auth: Auth, provider: AuthProvider): Promise<UserCredential>;
   export function signOut(auth: Auth): Promise<void>;
   export function onAuthStateChanged(auth: Auth, nextOrObserver: (user: User | null) => void, error?: (error: Error) => void, completed?: () => void): () => void;
-  export class Auth {
-    static getAuth(app: unknown): Auth;
+  export function linkWithCredential(user: User, credential: AuthCredential): Promise<UserCredential>;
+
+  export class EmailAuthProvider {
+    static credential(email: string, password: string): AuthCredential;
   }
+
+  export class Auth {
+    currentUser: User | null;
+  }
+
   export class GoogleAuthProvider {
     constructor();
     providerId: string;
   }
+
   export interface User {
     uid: string;
     email: string | null;
     displayName: string | null;
     photoURL: string | null;
+    providerData: UserInfo[];
   }
+
+  export interface UserInfo {
+    providerId: string;
+    uid: string;
+    displayName: string | null;
+    email: string | null;
+    photoURL: string | null;
+  }
+
   export interface UserCredential {
     user: User;
   }
+
   export interface AuthProvider {
+    providerId: string;
+  }
+
+  export interface AuthCredential {
     providerId: string;
   }
 }

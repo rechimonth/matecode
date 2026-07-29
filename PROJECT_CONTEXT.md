@@ -54,7 +54,7 @@ api/
 | `npm run test:watch` | Vitest watch mode |
 
 ## Test Accounts
-- **Email/Password**: `pruebametacode@gmail.com` / `con12345678` (funciona en local y producci髇)
+- **Email/Password**: `pruebametacode@gmail.com` / `con12345678` (funciona en local y producci贸n)
 
 ## Environment
 - `.env` (gitignored): Firebase config + `VITE_API_URL`
@@ -63,8 +63,8 @@ api/
   - Backend (API route): `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SES_FROM_EMAIL`, `SES_CONFIGURATION_SET`, `ALLOWED_ORIGINS`
 
 ## SES Configuration
-- Email verificado: `pruebametacode@gmail.com` en regi髇 `sa-east-1`.
-- La funci髇 `api/send-summary.ts` incluye rate limiting por IP y validaci髇 de origen.
+- Email verificado: `pruebametacode@gmail.com` en regi贸n `sa-east-1`.
+- La funci贸n `api/send-summary.ts` incluye rate limiting por IP y validaci贸n de origen.
 - Para manejo de bounces/complaints, crear un **Configuration Set** en SES Console y agregar un destino SNS:
   1. SES Console ? `sa-east-1` ? **Configuration Sets** ? **Create configuration set** ? nombre: `matecode-production`.
   2. Agregar un **Event destination** tipo **SNS** para eventos `BOUNCE` y `COMPLAINT`.

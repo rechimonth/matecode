@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null);
       await login(email, password);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al iniciar sesi�n";
+      const message = err instanceof Error ? err.message : "Error al iniciar sesiÃ³n";
       setError(message);
     }
   };
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null);
       await logout();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al cerrar sesi�n";
+      const message = err instanceof Error ? err.message : "Error al cerrar sesiÃ³n";
       setError(message);
     }
   };

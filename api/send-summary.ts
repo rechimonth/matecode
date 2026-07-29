@@ -82,7 +82,7 @@ export default async function handler(req: Request) {
       <body style="font-family:Inter,sans-serif;background:#f3f4f6;padding:24px">
         <div style="max-width:600px;margin:0 auto;background:#fff;padding:32px;border-radius:8px">
           <h1 style="color:#2563eb;margin-bottom:8px">Resumen de tareas - MateCode</h1>
-          <p style="color:#4b5563;margin-bottom:24px">Hola ${name || ""}, tenés <strong>${pendingCount}</strong> tareas pendientes y <strong>${completedCount}</strong> completadas.</p>
+          <p style="color:#4b5563;margin-bottom:24px">Hola ${name || ""}, tenÃ©s <strong>${pendingCount}</strong> tareas pendientes y <strong>${completedCount}</strong> completadas.</p>
           <ul style="padding-left:24px;color:#1f2937;line-height:1.8">${taskList}</ul>
           <p style="color:#6b7280;margin-top:24px;font-size:14px">MateCode Gestor de Tareas</p>
         </div>

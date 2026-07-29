@@ -59,7 +59,7 @@ export default async function handler(req: Request) {
 
   let body: { email: string; name?: string; tasks: Array<{ title: string; status: string; updatedAt: string }> };
   try {
-    body = await req.json();
+    body = await req.json() as typeof body;
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json" } });
   }

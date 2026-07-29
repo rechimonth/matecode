@@ -22,15 +22,15 @@ const AppRoutes = () => (
 
 const App = () => (
   <BrowserRouter>
-    <AuthProvider>
-      <TasksProvider>
-        <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <TasksProvider>
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><p className="text-gray-600">Cargando...</p></div>}>
             <AppRoutes />
           </Suspense>
-        </ToastProvider>
-      </TasksProvider>
-    </AuthProvider>
+        </TasksProvider>
+      </AuthProvider>
+    </ToastProvider>
   </BrowserRouter>
 );
 

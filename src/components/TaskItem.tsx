@@ -2,6 +2,7 @@ import { useTasks } from "../features/tasks/TasksContext";
 import { Task } from "../types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { DeleteButton } from "./DeleteButton";
 
 interface TaskItemProps {
   task: Task;
@@ -22,6 +23,10 @@ export const TaskItem = ({ task }: TaskItemProps) => {
     await toggleTaskStatus(task.id);
   };
 
+  const handleDelete = async () => {
+    await deleteTask(task.id);
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -30,7 +35,7 @@ export const TaskItem = ({ task }: TaskItemProps) => {
       {...listeners}
       className={`
         card flex flex-col sm:flex-row sm:items-center justify-between gap-4
-        transition-opacity duration-200
+        transition-all duration-300 ease-out
         ${isCompleted ? "opacity-75" : "opacity-100"}
       `}
     >
@@ -73,14 +78,7 @@ export const TaskItem = ({ task }: TaskItemProps) => {
           {isCompleted ? "Completada" : "Marcar completada"}
         </button>
 
-        <button
-          type="button"
-          onClick={() => deleteTask(task.id)}
-          aria-label={`Eliminar tarea: ${task.title}`}
-          className="btn btn-danger text-xs focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-        >
-          Eliminar
-        </button>
+        <DeleteButton onConfirm={handleDelete} title={task.title} />
       </div>
     </div>
   );

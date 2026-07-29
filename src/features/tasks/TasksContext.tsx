@@ -41,9 +41,21 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
 
   const deleteTask = async (id: string) => {
     setError(null);
-    await deleteTaskService(id);
     const userTask = tasks.find((t) => t.id === id);
-    if (userTask?.userId) await refreshTasks(userTask.userId);
+    const userId = userTask?.userId;
+    // Optimistic update
+    if (userId) {
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    }
+    try {
+      await deleteTaskService(id);
+    } catch (err) {
+      // Restaurar estado en caso de error
+      if (userId) {
+        await refreshTasks(userId);
+      }
+      throw err;
+    }
   };
 
   const toggleTaskStatus = async (id: string) => {

@@ -41,7 +41,14 @@ export const EmailButton = () => {
 
       clearTimeout(timeoutId);
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: { error?: string; message?: string } = {};
+      try {
+        data = JSON.parse(text) as typeof data;
+      } catch {
+        console.error("Invalid JSON response", text);
+        throw new Error("Respuesta inválida del servidor");
+      }
       if (!res.ok) throw new Error(data.error || "Error al enviar el email");
       showToast("success", "Email enviado correctamente");
     } catch (err) {

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
-import { Mail, Lock } from "lucide-react";
 
 export const RegisterPage = () => {
   const { register, loginWithGoogle, error, clearError } = useAuth();
@@ -48,25 +47,21 @@ export const RegisterPage = () => {
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
-                  className="input pl-10"
+                  className="input text-left"
                   type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setLocalError(null); }}
                   placeholder="tu@email.com"
                 />
               </div>
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  className="input pl-10"
+                  className="input text-left"
                   type="password"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setLocalError(null); }}
@@ -77,9 +72,8 @@ export const RegisterPage = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  className="input pl-10"
+                  className="input text-left"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => { setConfirmPassword(e.target.value); setLocalError(null); }}

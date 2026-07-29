@@ -85,12 +85,13 @@ describe("EmailButton", () => {
       reorderTask: vi.fn(),
       clearError: vi.fn(),
     } as any);
-    mockUseAuth.mockReturnValue({ user: { email: "a@b.com", displayName: "A" } } as any);
+    mockUseAuth.mockReturnValue({ user: { email: "a@b.com", displayName: "A", uid: "uid-1" } } as any);
 
     global.fetch = vi.fn(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({}),
+        text: () => Promise.resolve(JSON.stringify({ message: "Email sent" })),
+        json: () => Promise.resolve({ message: "Email sent" }),
       } as Response)
     );
 
@@ -100,7 +101,11 @@ describe("EmailButton", () => {
     await act(async () => {
       screen.getByText("Enviar resumen por email").click();
     });
-    
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
     expect(mockShowToast).toHaveBeenCalledWith("success", "Email enviado correctamente");
   });
 
@@ -118,11 +123,12 @@ describe("EmailButton", () => {
       reorderTask: vi.fn(),
       clearError: vi.fn(),
     } as any);
-    mockUseAuth.mockReturnValue({ user: { email: "a@b.com", displayName: "A" } } as any);
+    mockUseAuth.mockReturnValue({ user: { email: "a@b.com", displayName: "A", uid: "uid-1" } } as any);
 
     global.fetch = vi.fn(() =>
       Promise.resolve({
         ok: false,
+        text: () => Promise.resolve(JSON.stringify({ error: "server-error" })),
         json: () => Promise.resolve({ error: "server-error" }),
       } as Response)
     );
@@ -133,7 +139,11 @@ describe("EmailButton", () => {
     await act(async () => {
       screen.getByText("Enviar resumen por email").click();
     });
-    
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
     expect(mockShowToast).toHaveBeenCalledWith("error", "server-error");
   });
 });

@@ -14,12 +14,12 @@ const ses = new SESClient({
 });
 
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID,
+  apiKey: process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || "",
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN || "",
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "",
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID || "",
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
@@ -62,86 +62,101 @@ function getAllowedOrigins(): string[] {
 }
 
 export default async function handler(req: Request) {
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { "Content-Type": "application/json" } });
-  }
-
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
-  if (!checkRateLimit(ip)) {
-    return new Response(JSON.stringify({ error: "Too many requests" }), { status: 429, headers: { "Content-Type": "application/json" } });
-  }
-
-  const origin = req.headers.get("origin");
-  const allowedOrigins = getAllowedOrigins();
-  if (allowedOrigins.length > 0 && origin && !allowedOrigins.includes(origin)) {
-    return new Response(JSON.stringify({ error: "Origin not allowed" }), { status: 403, headers: { "Content-Type": "application/json" } });
-  }
-
-  let body: { email: string; name?: string; userId: string };
   try {
-    body = await req.json() as typeof body;
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json" } });
-  }
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { "Content-Type": "application/json" } });
+    }
 
-  const { email, name, userId } = body;
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+    if (!checkRateLimit(ip)) {
+      return new Response(JSON.stringify({ error: "Too many requests" }), { status: 429, headers: { "Content-Type": "application/json" } });
+    }
 
-  if (!email || !userId) {
-    return new Response(JSON.stringify({ error: "Email and userId are required" }), { status: 400, headers: { "Content-Type": "application/json" } });
-  }
+    const origin = req.headers.get("origin");
+    const allowedOrigins = getAllowedOrigins();
+    if (allowedOrigins.length > 0 && origin && !allowedOrigins.includes(origin)) {
+      return new Response(JSON.stringify({ error: "Origin not allowed" }), { status: 403, headers: { "Content-Type": "application/json" } });
+    }
 
-  let tasks: Array<{ title: string; status: string; updatedAt: string }> = [];
-  try {
-    const q = query(collection(db, "tasks"), where("userId", "==", userId));
-    const snapshot = await getDocs(q);
-    tasks = snapshot.docs.map((d) => {
-      const data = d.data();
-      return {
-        title: data.title,
-        status: data.status,
-        updatedAt: toDate(data.updatedAt).toISOString(),
-      };
+    let body: { email: string; name?: string; userId: string };
+    try {
+      body = await req.json() as typeof body;
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    }
+
+    const { email, name, userId } = body;
+
+    if (!email || !userId) {
+      return new Response(JSON.stringify({ error: "Email and userId are required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    }
+
+    if (!firebaseConfig.projectId) {
+      console.error("Missing Firebase project ID");
+      return new Response(JSON.stringify({ error: "Server misconfiguration: missing Firebase project ID" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    }
+
+    if (!process.env.SES_FROM_EMAIL) {
+      console.error("Missing SES_FROM_EMAIL");
+      return new Response(JSON.stringify({ error: "Server misconfiguration: missing SES sender email" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    }
+
+    let tasks: Array<{ title: string; status: string; updatedAt: string }> = [];
+    try {
+      const q = query(collection(db, "tasks"), where("userId", "==", userId));
+      const snapshot = await getDocs(q);
+      tasks = snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+          title: data.title,
+          status: data.status,
+          updatedAt: toDate(data.updatedAt).toISOString(),
+        };
+      });
+    } catch (err) {
+      console.error("Firestore query error", err);
+      return new Response(JSON.stringify({ error: "Failed to fetch tasks" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    }
+
+    const completedCount = tasks.filter((t) => t.status === "completed").length;
+    const pendingCount = tasks.filter((t) => t.status === "pending").length;
+
+    const taskList = tasks
+      .map((t) => `<li><strong style="color:#2563eb">${t.title}</strong> - ${t.status === "completed" ? "Completada" : "Pendiente"} (${new Date(t.updatedAt).toLocaleString("es-ES")})</li>`)
+      .join("");
+
+    const bodyHtml = `
+      <html>
+        <body style="font-family:Inter,sans-serif;background:#f3f4f6;padding:24px">
+          <div style="max-width:600px;margin:0 auto;background:#fff;padding:32px;border-radius:8px">
+            <h1 style="color:#2563eb;margin-bottom:8px">Resumen de tareas - MateCode</h1>
+            <p style="color:#4b5563;margin-bottom:24px">Hola ${name || ""}, tenés <strong>${pendingCount}</strong> tareas pendientes y <strong>${completedCount}</strong> completadas.</p>
+            <ul style="padding-left:24px;color:#1f2937;line-height:1.8">${taskList}</ul>
+            <p style="color:#6b7280;margin-top:24px;font-size:14px">MateCode Gestor de Tareas</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const command = new SendEmailCommand({
+      Source: process.env.SES_FROM_EMAIL || "",
+      Destination: { ToAddresses: [email] },
+      Message: {
+        Subject: { Data: "Resumen de tareas - MateCode", Charset: "UTF-8" },
+        Body: { Html: { Data: bodyHtml, Charset: "UTF-8" } },
+      },
+      ConfigurationSetName: process.env.SES_CONFIGURATION_SET,
     });
+
+    try {
+      await ses.send(command);
+      return new Response(JSON.stringify({ message: "Email sent" }), { status: 200, headers: { "Content-Type": "application/json" } });
+    } catch (error) {
+      console.error("SES error", error);
+      return new Response(JSON.stringify({ error: "Failed to send email" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    }
   } catch (err) {
-    console.error("Firestore query error", err);
-    return new Response(JSON.stringify({ error: "Failed to fetch tasks" }), { status: 500, headers: { "Content-Type": "application/json" } });
-  }
-
-  const completedCount = tasks.filter((t) => t.status === "completed").length;
-  const pendingCount = tasks.filter((t) => t.status === "pending").length;
-
-  const taskList = tasks
-    .map((t) => `<li><strong style="color:#2563eb">${t.title}</strong> - ${t.status === "completed" ? "Completada" : "Pendiente"} (${new Date(t.updatedAt).toLocaleString("es-ES")})</li>`)
-    .join("");
-
-  const bodyHtml = `
-    <html>
-      <body style="font-family:Inter,sans-serif;background:#f3f4f6;padding:24px">
-        <div style="max-width:600px;margin:0 auto;background:#fff;padding:32px;border-radius:8px">
-          <h1 style="color:#2563eb;margin-bottom:8px">Resumen de tareas - MateCode</h1>
-          <p style="color:#4b5563;margin-bottom:24px">Hola ${name || ""}, tenés <strong>${pendingCount}</strong> tareas pendientes y <strong>${completedCount}</strong> completadas.</p>
-          <ul style="padding-left:24px;color:#1f2937;line-height:1.8">${taskList}</ul>
-          <p style="color:#6b7280;margin-top:24px;font-size:14px">MateCode Gestor de Tareas</p>
-        </div>
-      </body>
-    </html>
-  `;
-
-  const command = new SendEmailCommand({
-    Source: process.env.SES_FROM_EMAIL || "",
-    Destination: { ToAddresses: [email] },
-    Message: {
-      Subject: { Data: "Resumen de tareas - MateCode", Charset: "UTF-8" },
-      Body: { Html: { Data: bodyHtml, Charset: "UTF-8" } },
-    },
-    ConfigurationSetName: process.env.SES_CONFIGURATION_SET,
-  });
-
-  try {
-    await ses.send(command);
-    return new Response(JSON.stringify({ message: "Email sent" }), { status: 200, headers: { "Content-Type": "application/json" } });
-  } catch (error) {
-    console.error("SES error", error);
-    return new Response(JSON.stringify({ error: "Failed to send email" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    console.error("Unhandled error in send-summary", err);
+    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 }

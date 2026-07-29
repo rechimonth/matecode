@@ -59,8 +59,10 @@ matecode/
 │  │  ├─ TodoList.tsx           # Lista de tareas con drag & drop
 │  │  ├─ TaskItem.tsx           # Item individual de tarea
 │  │  ├─ TaskFilters.tsx        # Filtros: Todas / Pendientes / Completadas
+│  │  ├─ TaskSummary.tsx        # Resumen de contadores de tareas
 │  │  ├─ EmailButton.tsx        # Botón envío resumen por email
 │  │  ├─ DeleteButton.tsx       # Modal confirmación eliminar tarea
+│  │  ├─ LinkPasswordForm.tsx   # Formulario vinculación password a Google
 │  │  └─ ui/
 │  │     └─ Toast.tsx            # Sistema de notificaciones toast
 │  │
@@ -80,7 +82,8 @@ matecode/
 │  │  └─ useTaskStats.ts        # Estadísticas de tareas (total, pendientes, completadas)
 │  │
 │  ├─ routes/
-│  │  └─ ProtectedRoute.tsx     # Guard de rutas privadas
+│  │  ├─ ProtectedRoute.tsx     # Guard de rutas privadas
+│  │  └─ PublicRoute.tsx        # Guard de rutas públicas (redirige si hay sesión)
 │  │
 │  ├─ types/
 │  │  ├─ index.ts               # Tipos: Task, User, AuthContextType, TasksContextType
@@ -110,6 +113,7 @@ matecode/
 │  ├─ components/
 │  │  ├─ Header.test.tsx
 │  │  ├─ TaskFilters.test.tsx
+│  │  ├─ TaskSummary.test.tsx
 │  │  ├─ TodoForm.test.tsx
 │  │  ├─ DeleteButton.test.tsx
 │  │  └─ EmailButton.test.tsx
@@ -403,7 +407,7 @@ La aplicación está diseñada para desplegarse en **Vercel**:
    - Rewrite `/api/(.*)` hacia la serverless function.
    - Rewrite `/(.*)` hacia `index.html` para soporte SPA.
 
-> **URL de producción**: _Configurar en el dashboard de Vercel luego del deploy._
+> **URL de producción**: https://matecodeapp-d94ca.vercel.app/
 
 ---
 

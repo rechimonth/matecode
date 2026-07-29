@@ -12,8 +12,8 @@ export const EmailButton = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleSend = async () => {
-    if (!user?.email) return;
-    
+    if (!user?.email || !user?.uid) return;
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(user.email)) {
       showToast("error", "Email inválido");
@@ -27,24 +27,20 @@ export const EmailButton = () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "/api/send-summary";
       const timeoutId = setTimeout(() => controller.abort(), 30000);
-      
+
       const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: user.email,
           name: user.displayName,
-          tasks: tasks.map((t) => ({
-            title: t.title,
-            status: t.status,
-            updatedAt: t.updatedAt.toISOString(),
-          })),
+          userId: user.uid,
         }),
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al enviar el email");
       showToast("success", "Email enviado correctamente");

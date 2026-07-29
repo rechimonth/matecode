@@ -57,37 +57,35 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
   const deleteTask = async (id: string) => {
     setError(null);
     
-    // Guardar snapshot para rollback individual
-    const snapshot = tasks;
+    const previousTasks = [...tasks];
     
     try {
       await deleteTaskService(id);
-      // Solo actualizamos el estado local si el backend confirmó
       setTasks((prev) => prev.filter((t) => t.id !== id));
     } catch (err) {
-      // Rollback individual: restaurar la tarea eliminada del snapshot
-      setTasks(snapshot);
-      setError(err instanceof Error ? err.message : "Error al eliminar la tarea");
+      setTasks(previousTasks);
+      const message = err instanceof Error ? err.message : "Error al eliminar la tarea";
+      setError(message);
+      throw err;
     }
   };
 
-  const toggleTaskStatus = async (id: string) => {
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
-    const previousStatus = task.status;
-    const nextStatus = previousStatus === "pending" ? "completed" : "pending";
-    
+  const toggleTaskStatus = async (id: string, currentStatus: string) => {
+    const previousTasks = tasks.map((t) => ({ ...t }));
+    const nextStatus = currentStatus === "pending" ? "completed" : "pending";
+
     addLoadingTask(id);
-    
-    // Optimistic update
-    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, status: nextStatus } : t));
-    
+    clearError();
+
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: nextStatus } : t)));
+
     try {
       await updateTaskService(id, { status: nextStatus });
     } catch (err) {
-      // Revertir estado local en caso de error
-      setTasks((prev) => prev.map((t) => t.id === id ? { ...t, status: previousStatus } : t));
-      setError(err instanceof Error ? err.message : "Error al actualizar la tarea");
+      setTasks(previousTasks);
+      const message = err instanceof Error ? err.message : "Error al actualizar la tarea";
+      setError(message);
+      throw err;
     } finally {
       removeLoadingTask(id);
     }

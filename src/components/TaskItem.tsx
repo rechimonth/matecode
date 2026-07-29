@@ -4,7 +4,8 @@ import { Task } from "../types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DeleteButton } from "./DeleteButton";
-import { CheckCircle2, CheckCheck } from "lucide-react";
+import { Circle, CheckCheck } from "lucide-react";
+import { useToast } from "./ui/Toast";
 
 interface TaskItemProps {
   task: Task;
@@ -12,6 +13,7 @@ interface TaskItemProps {
 
 export const TaskItem = ({ task }: TaskItemProps) => {
   const { deleteTask, toggleTaskStatus, isTaskLoading } = useTasks();
+  const { showToast } = useToast();
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id });
 
   const style = {
@@ -24,13 +26,22 @@ export const TaskItem = ({ task }: TaskItemProps) => {
   const [isRemoving, setIsRemoving] = useState(false);
 
   const handleToggleComplete = async () => {
-    await toggleTaskStatus(task.id);
+    try {
+      await toggleTaskStatus(task.id, task.status);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al actualizar la tarea";
+      showToast("error", message);
+    }
   };
 
   const handleDelete = useCallback(async () => {
     setIsRemoving(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    await deleteTask(task.id);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    try {
+      await deleteTask(task.id);
+    } catch {
+      setIsRemoving(false);
+    }
   }, [deleteTask, task.id]);
 
   return (
@@ -67,13 +78,15 @@ export const TaskItem = ({ task }: TaskItemProps) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2"
+      onPointerDown={(e) => e.stopPropagation()}>
         <button
           type="button"
           onClick={isCompleted ? undefined : handleToggleComplete}
           onDoubleClick={isCompleted ? handleToggleComplete : undefined}
           disabled={loading}
           aria-pressed={isCompleted}
+          aria-live="polite"
           aria-label={isCompleted ? "Doble clic para desmarcar como pendiente" : "Marcar tarea como completada"}
           className={`
             btn text-xs font-medium px-3 py-2 rounded-md transition-all duration-150 ease-in-out
@@ -93,10 +106,13 @@ export const TaskItem = ({ task }: TaskItemProps) => {
             </>
           ) : (
             <>
-              <CheckCircle2 className="w-4 h-4" />
+              <Circle className="w-4 h-4" />
               Marcar completada
             </>
           )}
+          <span className="sr-only" aria-live="polite">
+            Tarea {isCompleted ? "completada" : "pendiente"}
+          </span>
         </button>
 
         <DeleteButton onConfirm={handleDelete} title={task.title} disabled={loading || isRemoving} />

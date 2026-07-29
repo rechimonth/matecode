@@ -2,6 +2,8 @@ export const runtime = "nodejs";
 export const preferredRegion = "iad1";
 
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore, collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 
 const ses = new SESClient({
   region: process.env.AWS_REGION || "southamerica-east1",
@@ -10,6 +12,26 @@ const ses = new SESClient({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
   },
 });
+
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getFirestore(app);
+
+function toDate(value: unknown): Date {
+  if (typeof value === "object" && value !== null && "toDate" in value && typeof (value as { toDate: () => Date }).toDate === "function") {
+    return (value as { toDate: () => Date }).toDate();
+  }
+  if (value instanceof Date) return value;
+  return new Date(value as string);
+}
 
 // Rate limiting simple por IP (en memoria)
 const rateLimit = new Map<string, { count: number; lastReset: number }>();
@@ -44,37 +66,52 @@ export default async function handler(req: Request) {
     return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { "Content-Type": "application/json" } });
   }
 
-  // Rate limit por IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
   if (!checkRateLimit(ip)) {
     return new Response(JSON.stringify({ error: "Too many requests" }), { status: 429, headers: { "Content-Type": "application/json" } });
   }
 
-  // Validar origen
   const origin = req.headers.get("origin");
   const allowedOrigins = getAllowedOrigins();
   if (allowedOrigins.length > 0 && origin && !allowedOrigins.includes(origin)) {
     return new Response(JSON.stringify({ error: "Origin not allowed" }), { status: 403, headers: { "Content-Type": "application/json" } });
   }
 
-  let body: { email: string; name?: string; tasks: Array<{ title: string; status: string; updatedAt: string }> };
+  let body: { email: string; name?: string; userId: string };
   try {
     body = await req.json() as typeof body;
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json" } });
   }
 
-  const { email, name, tasks } = body;
+  const { email, name, userId } = body;
 
-  if (!email) {
-    return new Response(JSON.stringify({ error: "Email is required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+  if (!email || !userId) {
+    return new Response(JSON.stringify({ error: "Email and userId are required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+  }
+
+  let tasks: Array<{ title: string; status: string; updatedAt: string }> = [];
+  try {
+    const q = query(collection(db, "tasks"), where("userId", "==", userId));
+    const snapshot = await getDocs(q);
+    tasks = snapshot.docs.map((d) => {
+      const data = d.data();
+      return {
+        title: data.title,
+        status: data.status,
+        updatedAt: toDate(data.updatedAt).toISOString(),
+      };
+    });
+  } catch (err) {
+    console.error("Firestore query error", err);
+    return new Response(JSON.stringify({ error: "Failed to fetch tasks" }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 
   const completedCount = tasks.filter((t) => t.status === "completed").length;
   const pendingCount = tasks.filter((t) => t.status === "pending").length;
 
   const taskList = tasks
-    .map((t) => `<li><strong style="color:#2563eb">${t.title}</strong> - ${t.status === "completed" ? "Completada" : "Pendiente"} (${t.updatedAt})</li>`)
+    .map((t) => `<li><strong style="color:#2563eb">${t.title}</strong> - ${t.status === "completed" ? "Completada" : "Pendiente"} (${new Date(t.updatedAt).toLocaleString("es-ES")})</li>`)
     .join("");
 
   const bodyHtml = `

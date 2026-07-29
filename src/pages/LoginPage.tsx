@@ -1,14 +1,21 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+﻿import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
 import { Mail, Lock } from "lucide-react";
 
 export const LoginPage = () => {
-  const { login, loginWithGoogle, error, clearError } = useAuth();
+  const { login, loginWithGoogle, user, loading, error, clearError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/tasks", { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +28,21 @@ export const LoginPage = () => {
     setIsLoading(true);
     try {
       await login(email, password);
+      navigate("/tasks", { replace: true });
+    } catch {
+      // error handled in context
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLocalError(null);
+    clearError();
+    setIsLoading(true);
+    try {
+      await loginWithGoogle();
+      navigate("/tasks", { replace: true });
     } catch {
       // error handled in context
     } finally {
@@ -90,7 +112,7 @@ export const LoginPage = () => {
               <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-gray-500">O continúa con</span></div>
             </div>
             <button
-              onClick={loginWithGoogle}
+              onClick={handleGoogleLogin}
               disabled={isLoading}
               className="btn btn-secondary w-full mt-4 inline-flex items-center justify-center gap-2 transition-transform duration-150 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >

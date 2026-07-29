@@ -1,8 +1,9 @@
-import { lazy, Suspense } from "react";
+﻿import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./features/auth/AuthContext";
 import { TasksProvider } from "./features/tasks/TasksContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+import { PublicRoute } from "./routes/PublicRoute";
 import { ToastProvider } from "./components/ui/Toast";
 
 const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
@@ -12,8 +13,8 @@ const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ defa
 
 const AppRoutes = () => (
   <Routes>
-    <Route path="/login" element={<LoginPage />} />
-    <Route path="/register" element={<RegisterPage />} />
+    <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+    <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
     <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
     <Route path="/" element={<Navigate to="/tasks" replace />} />
     <Route path="*" element={<NotFoundPage />} />

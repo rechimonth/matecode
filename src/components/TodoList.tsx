@@ -2,6 +2,7 @@ import { useTasks } from "../features/tasks/TasksContext";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { TaskItem } from "./TaskItem";
+import { ClipboardList } from "lucide-react";
 
 export const TodoList = () => {
   const { tasks, loading, error, reorderTask } = useTasks();
@@ -20,21 +21,49 @@ export const TodoList = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="card animate-pulse">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 space-y-3">
+                <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+              <div className="flex gap-2">
+                <div className="h-8 w-24 bg-gray-200 rounded-md"></div>
+                <div className="h-8 w-20 bg-gray-200 rounded-md"></div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error) {
-    return <div className="card text-red-600">{error}</div>;
+    return (
+      <div className="card text-center py-12">
+        <div className="text-red-500 mb-4">
+          <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-1.964-1.333-2.732 0L3.732 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <p className="text-lg font-medium text-gray-900">Error al cargar tareas</p>
+        <p className="text-sm text-gray-600 mt-1">{error}</p>
+      </div>
+    );
   }
 
   if (tasks.length === 0) {
     return (
-      <div className="card text-center text-gray-500">
-        <p className="text-lg">No hay tareas para mostrar</p>
-        <p className="text-sm mt-1">CreÃ¡ una tarea para comenzar</p>
+      <div className="card text-center py-12">
+        <div className="text-gray-400 mb-4">
+          <ClipboardList className="w-16 h-16 mx-auto" strokeWidth={1.5} />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">No hay tareas</h3>
+        <p className="text-sm text-gray-600 max-w-sm mx-auto">
+          CreÃ¡ tu primera tarea para comenzar a organizar tu trabajo
+        </p>
       </div>
     );
   }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface DeleteButtonProps {
   onConfirm: () => Promise<void>;
@@ -10,16 +10,19 @@ export const DeleteButton = ({ onConfirm, title, disabled = false }: DeleteButto
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleClick = () => {
     setShowConfirm(true);
     setError(null);
   };
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setShowConfirm(false);
     setError(null);
-  };
+  }, []);
 
   const handleConfirm = async () => {
     setIsDeleting(true);
@@ -32,6 +35,60 @@ export const DeleteButton = ({ onConfirm, title, disabled = false }: DeleteButto
       setError(message);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Focus trap: al abrir, enfocar el primer botón accionable
+  useEffect(() => {
+    if (showConfirm) {
+      cancelButtonRef.current?.focus();
+    }
+  }, [showConfirm]);
+
+  // Cerrar con Escape
+  useEffect(() => {
+    if (!showConfirm) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleCancel();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [showConfirm, handleCancel]);
+
+  // Focus trap simple: ciclar foco entre botones del modal
+  const handleDialogKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab") return;
+
+    const focusableElements = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusableElements || focusableElements.length === 0) return;
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (e.shiftKey) {
+      if (document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      }
+    } else {
+      if (document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
+  };
+
+  // Cerrar con click-outside
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.contains(e.target as Node)) {
+      handleCancel();
     }
   };
 
@@ -50,8 +107,18 @@ export const DeleteButton = ({ onConfirm, title, disabled = false }: DeleteButto
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-dialog-title"
+    >
+      <div
+        ref={dialogRef}
+        onKeyDown={handleDialogKeyDown}
+        className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4"
+      >
         <h3 id="delete-dialog-title" className="text-lg font-semibold text-gray-900 mb-2">
           Confirmar eliminación
         </h3>
@@ -67,6 +134,7 @@ export const DeleteButton = ({ onConfirm, title, disabled = false }: DeleteButto
 
         <div className="flex gap-3 justify-end">
           <button
+            ref={cancelButtonRef}
             type="button"
             onClick={handleCancel}
             disabled={isDeleting}
@@ -75,6 +143,7 @@ export const DeleteButton = ({ onConfirm, title, disabled = false }: DeleteButto
             Cancelar
           </button>
           <button
+            ref={confirmButtonRef}
             type="button"
             onClick={handleConfirm}
             disabled={isDeleting}

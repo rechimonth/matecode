@@ -5,17 +5,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 describe("EmailButton", () => {
   let mockUseTasks: ReturnType<typeof vi.fn>;
   let mockUseAuth: ReturnType<typeof vi.fn>;
+  let mockShowToast: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
     mockUseTasks = vi.fn();
     mockUseAuth = vi.fn();
+    mockShowToast = vi.fn();
     vi.doMock("../../src/features/tasks/TasksContext", () => ({
       useTasks: mockUseTasks,
     }));
     vi.doMock("../../src/features/auth/AuthContext", () => ({
       useAuth: mockUseAuth,
+    }));
+    vi.doMock("../../src/components/ui/Toast", () => ({
+      useToast: () => ({ showToast: mockShowToast }),
+      ToastProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     }));
   });
 
@@ -94,7 +100,8 @@ describe("EmailButton", () => {
     await act(async () => {
       screen.getByText("Enviar resumen por email").click();
     });
-    expect(await screen.findByText("Email enviado correctamente")).toBeTruthy();
+    
+    expect(mockShowToast).toHaveBeenCalledWith("success", "Email enviado correctamente");
   });
 
   it("shows error message on failed send", async () => {
@@ -126,6 +133,7 @@ describe("EmailButton", () => {
     await act(async () => {
       screen.getByText("Enviar resumen por email").click();
     });
-    expect(await screen.findByText("server-error")).toBeTruthy();
+    
+    expect(mockShowToast).toHaveBeenCalledWith("error", "server-error");
   });
 });

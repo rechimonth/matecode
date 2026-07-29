@@ -81,6 +81,6 @@ describe("TaskFilters", () => {
     render(<TaskFilters />);
 
     const completedButton = screen.getByText("Completadas");
-    expect(completedButton.className).toContain("bg-primary");
+    expect(completedButton.className).toContain("bg-blue-600");
   });
 });

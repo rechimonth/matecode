@@ -11,6 +11,7 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | TaskStatus>("all");
+  const [loadingTasks, setLoadingTasks] = useState<Set<string>>(new Set());
 
   const refreshTasks = useCallback(async (userId: string) => {
     setLoading(true);
@@ -25,6 +26,20 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     }
   }, []);
+
+  const addLoadingTask = (id: string) => {
+    setLoadingTasks((prev) => new Set(prev).add(id));
+  };
+
+  const removeLoadingTask = (id: string) => {
+    setLoadingTasks((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  const isTaskLoading = (id: string) => loadingTasks.has(id);
 
   const addTask = async (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => {
     setError(null);
@@ -41,29 +56,41 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
 
   const deleteTask = async (id: string) => {
     setError(null);
-    const userTask = tasks.find((t) => t.id === id);
-    const userId = userTask?.userId;
-    // Optimistic update
-    if (userId) {
-      setTasks((prev) => prev.filter((t) => t.id !== id));
-    }
+    
+    // Guardar snapshot para rollback individual
+    const snapshot = tasks;
+    
     try {
       await deleteTaskService(id);
+      // Solo actualizamos el estado local si el backend confirmó
+      setTasks((prev) => prev.filter((t) => t.id !== id));
     } catch (err) {
-      // Restaurar estado en caso de error
-      if (userId) {
-        await refreshTasks(userId);
-      }
-      throw err;
+      // Rollback individual: restaurar la tarea eliminada del snapshot
+      setTasks(snapshot);
+      setError(err instanceof Error ? err.message : "Error al eliminar la tarea");
     }
   };
 
   const toggleTaskStatus = async (id: string) => {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
-    const nextStatus = task.status === "pending" ? "completed" : "pending";
-    await updateTaskService(id, { status: nextStatus });
-    if (task.userId) await refreshTasks(task.userId);
+    const previousStatus = task.status;
+    const nextStatus = previousStatus === "pending" ? "completed" : "pending";
+    
+    addLoadingTask(id);
+    
+    // Optimistic update
+    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, status: nextStatus } : t));
+    
+    try {
+      await updateTaskService(id, { status: nextStatus });
+    } catch (err) {
+      // Revertir estado local en caso de error
+      setTasks((prev) => prev.map((t) => t.id === id ? { ...t, status: previousStatus } : t));
+      setError(err instanceof Error ? err.message : "Error al actualizar la tarea");
+    } finally {
+      removeLoadingTask(id);
+    }
   };
 
   const reorderTask = async (activeId: string, _overId: string) => {
@@ -106,7 +133,7 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user?.uid]);
 
   return (
-    <TasksContext.Provider value={{ tasks: filteredTasks, loading, error, filters: { status: statusFilter }, setStatusFilter, addTask, updateTask, deleteTask, toggleTaskStatus, clearError, reorderTask }}>
+    <TasksContext.Provider value={{ tasks: filteredTasks, loading, error, filters: { status: statusFilter }, setStatusFilter, addTask, updateTask, deleteTask, toggleTaskStatus, clearError, reorderTask, isTaskLoading }}>
       {children}
     </TasksContext.Provider>
   );

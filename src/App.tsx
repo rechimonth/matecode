@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./features/auth/AuthContext";
 import { TasksProvider } from "./features/tasks/TasksContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+import { ToastProvider } from "./components/ui/Toast";
 
 const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({ default: m.RegisterPage })));
@@ -23,9 +24,11 @@ const App = () => (
   <BrowserRouter>
     <AuthProvider>
       <TasksProvider>
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><p className="text-gray-600">Cargando...</p></div>}>
-          <AppRoutes />
-        </Suspense>
+        <ToastProvider>
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><p className="text-gray-600">Cargando...</p></div>}>
+            <AppRoutes />
+          </Suspense>
+        </ToastProvider>
       </TasksProvider>
     </AuthProvider>
   </BrowserRouter>

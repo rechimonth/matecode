@@ -1,6 +1,7 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, act } from "@testing-library/react";
+import { ToastProvider } from "../src/components/ui/Toast";
 
 vi.mock("firebase/auth", () => ({
   getAuth: vi.fn(() => ({})),
@@ -52,7 +53,11 @@ describe("AuthContext", () => {
       return () => {};
     });
 
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    render(
+      <ToastProvider>
+        <AuthProvider><TestConsumer /></AuthProvider>
+      </ToastProvider>
+    );
 
     expect(screen.getByTestId("loading").textContent).toBe("loading");
 
@@ -70,7 +75,11 @@ describe("AuthContext", () => {
       return () => {};
     });
 
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    render(
+      <ToastProvider>
+        <AuthProvider><TestConsumer /></AuthProvider>
+      </ToastProvider>
+    );
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("login").click());
@@ -84,7 +93,11 @@ describe("AuthContext", () => {
       return () => {};
     });
 
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    render(
+      <ToastProvider>
+        <AuthProvider><TestConsumer /></AuthProvider>
+      </ToastProvider>
+    );
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("login").click());
@@ -98,7 +111,11 @@ describe("AuthContext", () => {
       return () => {};
     });
 
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    render(
+      <ToastProvider>
+        <AuthProvider><TestConsumer /></AuthProvider>
+      </ToastProvider>
+    );
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("register").click());
@@ -112,7 +129,11 @@ describe("AuthContext", () => {
       return () => {};
     });
 
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    render(
+      <ToastProvider>
+        <AuthProvider><TestConsumer /></AuthProvider>
+      </ToastProvider>
+    );
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("register").click());
@@ -126,7 +147,11 @@ describe("AuthContext", () => {
       return () => {};
     });
 
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    render(
+      <ToastProvider>
+        <AuthProvider><TestConsumer /></AuthProvider>
+      </ToastProvider>
+    );
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("google").click());
@@ -140,7 +165,11 @@ describe("AuthContext", () => {
       return () => {};
     });
 
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    render(
+      <ToastProvider>
+        <AuthProvider><TestConsumer /></AuthProvider>
+      </ToastProvider>
+    );
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("google").click());
@@ -154,7 +183,11 @@ describe("AuthContext", () => {
       return () => {};
     });
 
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    render(
+      <ToastProvider>
+        <AuthProvider><TestConsumer /></AuthProvider>
+      </ToastProvider>
+    );
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("logout").click());
@@ -168,7 +201,11 @@ describe("AuthContext", () => {
       return () => {};
     });
 
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    render(
+      <ToastProvider>
+        <AuthProvider><TestConsumer /></AuthProvider>
+      </ToastProvider>
+    );
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("logout").click());
@@ -182,7 +219,11 @@ describe("AuthContext", () => {
       return () => {};
     });
 
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    render(
+      <ToastProvider>
+        <AuthProvider><TestConsumer /></AuthProvider>
+      </ToastProvider>
+    );
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("login").click());

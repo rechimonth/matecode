@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ToastProvider } from "../../src/components/ui/Toast";
 
 describe("Header", () => {
   let mockUseAuth: ReturnType<typeof vi.fn>;
@@ -27,7 +28,11 @@ describe("Header", () => {
     } as any);
 
     const { Header } = await import("../../src/components/Header");
-    render(<Header />);
+    render(
+      <ToastProvider>
+        <Header />
+      </ToastProvider>
+    );
 
     expect(screen.getByText("Alice")).toBeTruthy();
   });
@@ -45,7 +50,11 @@ describe("Header", () => {
     } as any);
 
     const { Header } = await import("../../src/components/Header");
-    render(<Header />);
+    render(
+      <ToastProvider>
+        <Header />
+      </ToastProvider>
+    );
 
     expect(screen.getByText("a@b.com")).toBeTruthy();
   });
@@ -64,10 +73,15 @@ describe("Header", () => {
     } as any);
 
     const { Header } = await import("../../src/components/Header");
-    render(<Header />);
+    render(
+      <ToastProvider>
+        <Header />
+      </ToastProvider>
+    );
 
+    const button = screen.getByRole("button", { name: /cerrar/i });
     act(() => {
-      screen.getByText("Cerrar Sesión").click();
+      button.click();
     });
     expect(logout).toHaveBeenCalled();
   });

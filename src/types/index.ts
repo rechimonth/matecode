@@ -44,4 +44,5 @@ export interface TasksContextType {
   toggleTaskStatus: (_id: string) => Promise<void>;
   reorderTask: (_activeId: string, _overId: string) => Promise<void>;
   clearError: () => void;
+  isTaskLoading: (_id: string) => boolean;
 }

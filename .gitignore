@@ -22,3 +22,7 @@ PROJECT_CONTEXT.md
 tsconfig.api.tsbuildinfo
 api/send-summary.d.ts
 tsconfig.api.tsbuildinfo
+
+tsconfig.app.tsbuildinfo
+tsconfig.node.tsbuildinfo
+api/send-summary.d.ts

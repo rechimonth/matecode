@@ -1,4 +1,3 @@
-export const runtime = "nodejs";
 export const preferredRegion = "iad1";
 
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
@@ -73,13 +72,11 @@ function getAllowedOrigins(): string[] {
   return origins.split(",").map((o) => o.trim()).filter(Boolean);
 }
 
-function getHeader(req: Request, name: string): string | null {
-  const value = req.headers.get(name);
+function getHeader(req: any, name: string): string | null {
+  const headers = req.headers || {};
+  const value = headers[name] || headers[name.toLowerCase()];
   if (typeof value === "string") return value;
-  const anyHeaders = req.headers as unknown as Record<string, string | string[] | undefined>;
-  const candidate = anyHeaders[name] || anyHeaders[name.toLowerCase()];
-  if (typeof candidate === "string") return candidate;
-  if (Array.isArray(candidate)) return candidate[0] ?? null;
+  if (Array.isArray(value)) return value[0] ?? null;
   return null;
 }
 
@@ -90,28 +87,28 @@ function assertString(value: unknown, label: string): string {
   return value;
 }
 
-export default async function handler(req: Request) {
+export default async function handler(req: any, res: any) {
   try {
     if (req.method !== "POST") {
-      return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { "Content-Type": "application/json" } });
+      return res.status(405).json({ error: "Method not allowed" });
     }
 
     const ip = getHeader(req, "x-forwarded-for")?.split(",")[0]?.trim() || getHeader(req, "x-real-ip") || "unknown";
     if (!checkRateLimit(ip)) {
-      return new Response(JSON.stringify({ error: "Too many requests" }), { status: 429, headers: { "Content-Type": "application/json" } });
+      return res.status(429).json({ error: "Too many requests" });
     }
 
     const origin = getHeader(req, "origin");
     const allowedOrigins = getAllowedOrigins();
     if (allowedOrigins.length > 0 && origin && !allowedOrigins.includes(origin)) {
-      return new Response(JSON.stringify({ error: "Origin not allowed" }), { status: 403, headers: { "Content-Type": "application/json" } });
+      return res.status(403).json({ error: "Origin not allowed" });
     }
 
     let body: { email: string; name?: string; userId: string };
     try {
       body = await req.json() as typeof body;
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json" } });
+      return res.status(400).json({ error: "Invalid JSON" });
     }
 
     const email = assertString(body.email, "email is required");
@@ -133,7 +130,7 @@ export default async function handler(req: Request) {
       });
     } catch (err) {
       console.error("Firestore query error", err);
-      return new Response(JSON.stringify({ error: "Failed to fetch tasks" }), { status: 500, headers: { "Content-Type": "application/json" } });
+      return res.status(500).json({ error: "Failed to fetch tasks" });
     }
 
     const completedCount = tasks.filter((t) => t.status === "completed").length;
@@ -148,7 +145,7 @@ export default async function handler(req: Request) {
         <body style="font-family:Inter,sans-serif;background:#f3f4f6;padding:24px">
           <div style="max-width:600px;margin:0 auto;background:#fff;padding:32px;border-radius:8px">
             <h1 style="color:#2563eb;margin-bottom:8px">Resumen de tareas - MateCode</h1>
-            <p style="color:#4b5563;margin-bottom:24px">Hola ${body.name || ""}, tenÃ©s <strong>${pendingCount}</strong> tareas pendientes y <strong>${completedCount}</strong> completadas.</p>
+            <p style="color:#4b5563;margin-bottom:24px">Hola ${body.name || ""}, tenés <strong>${pendingCount}</strong> tareas pendientes y <strong>${completedCount}</strong> completadas.</p>
             <ul style="padding-left:24px;color:#1f2937;line-height:1.8">${taskList}</ul>
             <p style="color:#6b7280;margin-top:24px;font-size:14px">MateCode Gestor de Tareas</p>
           </div>
@@ -168,13 +165,13 @@ export default async function handler(req: Request) {
 
     try {
       await ses.send(command);
-      return new Response(JSON.stringify({ message: "Email sent" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      return res.status(200).json({ message: "Email sent" });
     } catch (error) {
       console.error("SES error", error);
-      return new Response(JSON.stringify({ error: "Failed to send email" }), { status: 500, headers: { "Content-Type": "application/json" } });
+      return res.status(500).json({ error: "Failed to send email" });
     }
   } catch (err) {
     console.error("Unhandled error in send-summary", err);
-    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

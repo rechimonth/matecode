@@ -1,7 +1,7 @@
 export const preferredRegion = "iad1";
 
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
-import * as admin from "firebase-admin";
+import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
 const ses = new SESClient({
@@ -33,10 +33,10 @@ function getAdminDb() {
     throw new Error("Server misconfiguration: FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON");
   }
 
-  const app = admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount as Parameters<typeof admin.credential.cert>[0]),
-    projectId: serviceAccount.project_id,
-  });
+  const app = initializeApp({
+      credential: cert(serviceAccount as Parameters<typeof cert>[0]),
+      projectId: serviceAccount.project_id,
+    });
 
   adminDb = getFirestore(app);
   return adminDb;

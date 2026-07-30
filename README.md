@@ -1,4 +1,4 @@
-# MateCode
+﻿# MateCode
 
 **URL de producción**: https://matecode-lyart.vercel.app
 
@@ -30,13 +30,13 @@ Los usuarios pueden registrarse, autenticarse, crear y gestionar sus tareas pers
 |------------|---------|-----|
 | React | 19.2.7 | Biblioteca UI para la SPA |
 | TypeScript | ~6.0.2 | Tipado estático y seguridad de tipos |
-| Vite | ^8.1.1 | Bundler y servidor de desarrollo |
+| Vite | ^8.1.5 | Bundler y servidor de desarrollo |
 | Tailwind CSS | ^3.4.0 | Estilos utility-first y diseño responsive |
 | Firebase Auth | ^10.14.1 | Autenticación (email/password y Google) |
 | Cloud Firestore | ^10.14.1 | Base de datos NoSQL en tiempo real |
 | AWS SDK (SES) | ^3.600.0 | Envío de emails transaccionales |
 | React Router | ^7.18.1 | Enrutamiento SPA |
-| dnd-kit | ^6.3.1 / ^10.0.0 | Drag & drop para reordenar tareas |
+| @dnd-kit/core / @dnd-kit/sortable | ^6.3.1 / ^10.0.0 | Drag & drop para reordenar tareas |
 | lucide-react | ^1.27.0 | Iconografía SVG |
 | Vitest | ^1.6.0 | Framework de testing |
 | React Testing Library | ^16.0.0 | Tests de componentes |
@@ -48,70 +48,71 @@ Los usuarios pueden registrarse, autenticarse, crear y gestionar sus tareas pers
 
 ```
 matecode/
+├─ index.html                    # Punto de entrada HTML (Vite)
 ├─ src/
-│  ├─ pages/                    # Vistas SPA
-│  │  ├─ LoginPage.tsx          # Formulario de inicio de sesión
-│  │  ├─ RegisterPage.tsx       # Formulario de registro
-│  │  ├─ TasksPage.tsx          # Panel principal de tareas
-│  │  └─ NotFoundPage.tsx       # Página 404 personalizada
+│  ├─ assets/                    # Imágenes y assets públicos
 │  │
-│  ├─ components/               # Componentes UI reutilizables
-│  │  ├─ Header.tsx             # Cabecera con info de usuario y logout
-│  │  ├─ TodoForm.tsx           # Formulario crear/editar tarea
-│  │  ├─ TodoList.tsx           # Lista de tareas con drag & drop
-│  │  ├─ TaskItem.tsx           # Item individual de tarea
-│  │  ├─ TaskFilters.tsx        # Filtros: Todas / Pendientes / Completadas
-│  │  ├─ TaskSummary.tsx        # Resumen de contadores de tareas
-│  │  ├─ EmailButton.tsx        # Botón envío resumen por email
-│  │  ├─ DeleteButton.tsx       # Modal confirmación eliminar tarea
-│  │  ├─ LinkPasswordForm.tsx   # Formulario vinculación password a Google
+│  ├─ pages/                     # Vistas SPA
+│  │  ├─ LoginPage.tsx           # Formulario de inicio de sesión
+│  │  ├─ RegisterPage.tsx        # Formulario de registro
+│  │  ├─ TasksPage.tsx           # Panel principal de tareas
+│  │  └─ NotFoundPage.tsx        # Página 404 personalizada
+│  │
+│  ├─ components/                # Componentes UI reutilizables
+│  │  ├─ Header.tsx              # Cabecera con info de usuario y logout
+│  │  ├─ TodoForm.tsx            # Formulario crear/editar tarea
+│  │  ├─ TodoList.tsx            # Lista de tareas con drag & drop
+│  │  ├─ TaskItem.tsx            # Item individual de tarea
+│  │  ├─ TaskFilters.tsx         # Filtros: Todas / Pendientes / Completadas
+│  │  ├─ TaskSummary.tsx         # Resumen de contadores de tareas
+│  │  ├─ EmailButton.tsx         # Botón envío resumen por email
+│  │  ├─ DeleteButton.tsx        # Modal confirmación eliminar tarea
+│  │  ├─ LinkPasswordForm.tsx    # Formulario vinculación password a Google
 │  │  └─ ui/
 │  │     └─ Toast.tsx            # Sistema de notificaciones toast
 │  │
-│  ├─ features/                 # Lógica de dominio por contexto
+│  ├─ features/                  # Lógica de dominio por contexto
 │  │  ├─ auth/
-│  │  │  └─ AuthContext.tsx     # Contexto de autenticación
+│  │  │  └─ AuthContext.tsx      # Contexto de autenticación
 │  │  └─ tasks/
-│  │     └─ TasksContext.tsx    # Contexto de gestión de tareas
+│  │     └─ TasksContext.tsx     # Contexto de gestión de tareas
 │  │
-│  ├─ services/                 # Integraciones externas
-│  │  ├─ firebase.ts            # Inicialización Firebase Auth + Firestore
-│  │  ├─ auth.ts                # Servicios: login, register, google, logout
-│  │  └─ tasks.ts               # Servicios CRUD Firestore
+│  ├─ services/                  # Integraciones externas
+│  │  ├─ firebase.ts             # Inicialización Firebase Auth + Firestore
+│  │  ├─ auth.ts                 # Servicios: login, register, google, logout
+│  │  └─ tasks.ts                # Servicios CRUD Firestore
 │  │
-│  ├─ hooks/                    # Hooks personalizados
-│  │  ├─ useForm.ts             # Hook genérico para formularios
-│  │  └─ useTaskStats.ts        # Estadísticas de tareas (total, pendientes, completadas)
+│  ├─ hooks/                     # Hooks personalizados
+│  │  ├─ useForm.ts              # Hook genérico para formularios
+│  │  └─ useTaskStats.ts         # Estadísticas de tareas (total, pendientes, completadas)
 │  │
 │  ├─ routes/
-│  │  ├─ ProtectedRoute.tsx     # Guard de rutas privadas
-│  │  └─ PublicRoute.tsx        # Guard de rutas públicas (redirige si hay sesión)
+│  │  ├─ ProtectedRoute.tsx      # Guard de rutas privadas
+│  │  └─ PublicRoute.tsx         # Guard de rutas públicas (redirige si hay sesión)
 │  │
 │  ├─ types/
-│  │  ├─ index.ts               # Tipos: Task, User, AuthContextType, TasksContextType
-│  │  └─ firebase.d.ts          # Declaraciones TypeScript para Firebase
+│  │  ├─ index.ts                # Tipos: Task, User, AuthContextType, TasksContextType
+│  │  └─ firebase.d.ts           # Declaraciones TypeScript para Firebase
 │  │
 │  ├─ utils/
-│  │  └─ validators.ts          # Validadores: email, password, fechas, truncate
+│  │  └─ validators.ts           # Validadores: email, password, fechas, truncate
 │  │
-│  ├─ styles/
-│  │  └─ index.css              # Estilos globales, utilidades Tailwind, shimmer/skeleton
-│  │
-│  ├─ App.tsx                   # Enrutamiento principal y providers
-│  └─ main.tsx                  # Punto de entrada
+│  ├─ App.css                    # Estilos del componente raíz
+│  ├─ index.css                  # Estilos globales, utilidades Tailwind, shimmer/skeleton
+│  ├─ App.tsx                    # Enrutamiento principal y providers
+│  └─ main.tsx                   # Punto de entrada
 │
 ├─ api/
-│  └─ send-summary.ts           # Vercel Serverless Function: AWS SES email
+│  └─ send-summary.ts            # Vercel Serverless Function: AWS SES email
 │
 ├─ tests/
-│  ├─ setup.ts                  # Configuración global de tests
+│  ├─ setup.ts                   # Configuración global de tests
 │  ├─ mocks/
-│  │  ├─ firebase.ts            # Mocks de Firebase Auth
-│  │  └─ firebase-stub.ts       # Stubs auxiliares
-│  ├─ validators.test.ts        # Tests unitarios de validadores
+│  │  └─ firebase.ts             # Mocks de Firebase Auth
+│  ├─ validators.test.ts         # Tests unitarios de validadores
 │  ├─ services/
-│  │  ├─ auth.test.ts           # Tests servicios de autenticación
-│  │  └─ tasks.test.ts          # Tests servicios de tareas
+│  │  ├─ auth.test.ts            # Tests servicios de autenticación
+│  │  └─ tasks.test.ts           # Tests servicios de tareas
 │  ├─ components/
 │  │  ├─ Header.test.tsx
 │  │  ├─ TaskFilters.test.tsx
@@ -127,15 +128,18 @@ matecode/
 │  ├─ ProtectedRoute.test.tsx
 │  └─ dummy.test.ts
 │
-├─ .env.example                 # Variables de entorno (plantilla)
-├─ .gitignore                   # Exclusiones: .env, node_modules, dist, etc.
-├─ vercel.json                  # Configuración de deploy y rewrites
-├─ firestore.rules              # Reglas de seguridad Firestore
-├─ package.json                 # Dependencias y scripts
-├─ tsconfig.json                # Configuración TypeScript (project references)
-├─ vite.config.ts               # Configuración Vite + Vitest
-├─ eslint.config.*              # Reglas ESLint
-└─ README.md                    # Documentación del proyecto
+├─ .env.example                  # Variables de entorno (plantilla)
+├─ .env.local                    # Variables locales (NO se sube)
+├─ .gitignore                    # Exclusiones: .env, node_modules, dist, etc.
+├─ tailwind.config.js            # Configuración de Tailwind CSS
+├─ postcss.config.js             # Configuración de Postcss
+├─ vercel.json                   # Configuración de deploy y rewrites
+├─ firestore.rules               # Reglas de seguridad Firestore
+├─ package.json                  # Dependencias y scripts
+├─ tsconfig.json                 # Configuración TypeScript (project references)
+├─ vite.config.ts                # Configuración Vite + Vitest
+├─ eslint.config.js              # Reglas ESLint
+└─ README.md                     # Documentación del proyecto
 ```
 
 ---
@@ -195,7 +199,7 @@ matecode/
 - Loading states en todos los botones de acción.
 
 ### Testing
-- **65 tests** con Vitest y React Testing Library.
+- **~65 casos de prueba** con Vitest y React Testing Library.
 - Cobertura de servicios, contextos, componentes y páginas.
 - Mocks de Firebase Auth y Firestore.
 - Tests de casos de error y bordes.
@@ -224,9 +228,9 @@ matecode/
 
 ### 4. Envío de email
 1. El usuario presiona "Enviar resumen por email".
-2. El frontend valida el email y envía un `POST` a `/api/send-summary`.
+2. El frontend envía un `POST` a `/api/send-summary` con el email del usuario autenticado.
 3. La Vercel Function recibe el payload, aplica rate limiting y valida el origen.
-4. AWS SDK (SES) envía el email HTML con el resumen de tareas.
+4. AWS SDK (SES) envía el email HTML con el resumen de tareas al destinatario.
 
 ### 5. Logout
 1. El usuario presiona "Cerrar Sesión".
@@ -240,7 +244,7 @@ matecode/
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/matecode.git
+git clone https://github.com/rechimonth/matecode.git
 cd matecode
 
 # Instalar dependencias
@@ -326,10 +330,10 @@ AWS SES no puede invocarse directamente desde el frontend sin exponer credencial
 - Invoca AWS SES con credenciales almacenadas en variables de entorno del servidor.
 
 ### Tailwind CSS
-Se adoptó Tailwind para acelerar el desarrollo de interfaces consistentes y responsive. Las clases utilitarias se complementan con componentes base (`.btn`, `.card`, `.input`) definidos en `src/styles/index.css`.
+Se adoptó Tailwind para acelerar el desarrollo de interfaces consistentes y responsive. Las clases utilitarias se complementan con componentes base (`.btn`, `.card`, `.input`) definidos en `src/index.css`.
 
 ### dnd-kit
-Para el requisito extra de drag & drop se integró `dnd-kit`, una biblioteca accesible y ligera que permite reordenar tareas mediante arrastre, con soporte de teclado.
+Para el requisito extra de drag & drop se integró `dnd-kit` (paquetes `@dnd-kit/core` y `@dnd-kit/sortable`), una biblioteca accesible y ligera que permite reordenar tareas mediante arrastre, con soporte de teclado.
 
 ### Lazy Loading
 Las páginas se cargan de forma diferida con `React.lazy` y `Suspense`, reduciendo el bundle inicial y mejorando el tiempo de carga percibido.
@@ -553,7 +557,7 @@ MIT — ver archivo [LICENSE](LICENSE) para más detalles.
 ## 👤 Autor
 
 **MateCode** — Proyecto desarrollado como Proyecto Integrador.  
-Repositorio:(https://github.com/rechimonth/matecode.)
+Repositorio: (https://github.com/rechimonth/matecode)
 
 ---
 
@@ -563,7 +567,8 @@ Repositorio:(https://github.com/rechimonth/matecode.)
 
 | Sección | Imagen |
 |---------|--------|
-| Login | `docs/images/login.png` |
-| Dashboard | `docs/images/dashboard.png` |
-| Mobile | `docs/images/mobile.png` |
-| Email | `docs/images/email.png` |
+| Login | `docs/images/login.jpeg` |
+| Dashboard | `docs/images/dashboard.jpeg` |
+| Mobile | `docs/images/mobile.jpeg` |
+| Email | `docs/images/email.jpeg` |
+

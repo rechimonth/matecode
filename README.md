@@ -10,6 +10,20 @@ El proyecto implementa un flujo completo de autenticación, CRUD de tareas con s
 
 ---
 
+<div align="center">
+
+![React](https://img.shields.io/badge/React-19.2.7-61DAFB?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178C6?logo=typescript)
+![Firebase](https://img.shields.io/badge/Firebase-10.14.1-FFCA28?logo=firebase)
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?logo=vercel)
+
+**Gestor estratégico de tareas para pequeñas empresas**
+
+[Demo en producción](https://matecode-lyart.vercel.app) · [Reportar bug](https://github.com/rechimonth/matecode/issues) · [Solicitar feature](https://github.com/rechimonth/matecode/issues)
+
+</div>
+
+---
 ## 🎯 Problema que resuelve
 
 Muchas pequeñas empresas y equipos remotos dependen de herramientas de gestión de tareas genéricas, costosas o excesivamente complejas. MateCode ofrece una alternativa ligera, autocontenida y económica basada en servicios administrados (BaaS), sin necesidad de infraestructura propia.
@@ -46,13 +60,35 @@ Los usuarios pueden registrarse, autenticarse, crear y gestionar sus tareas pers
 
 ---
 
-# <div align=`"center`">![React](https://img.shields.io/badge/React-19.2.7-61DAFB?logo=react)![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178C6?logo=typescript)![Firebase](https://img.shields.io/badge/Firebase-10.14.1-FFCA28?logo=firebase)![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?logo=vercel)`n`n**Gestor estratégico de tareas para pequeñas empresas**`n`n[Demo en producción](https://matecode-lyart.vercel.app) · [Reportar bug](https://github.com/rechimonth/matecode/issues) · [Solicitar feature](https://github.com/rechimonth/matecode/issues)`n`n</div>`n`n---`n`n## 📁 Estructura del proyecto
+
+
+---
+
+## 📁 Estructura del proyecto
 
 ```
 matecode/
 ├─ index.html                    # Punto de entrada HTML (Vite)
+├─ .env.example                  # Variables de entorno (plantilla sin secretos)
+├─ .env.local                    # Variables locales de desarrollo (NO se sube)
+├─ .gitignore                    # Exclusiones del repositorio
+├─ package.json                  # Dependencias y scripts
+├─ tsconfig.json                 # Configuración TypeScript (project references)
+├─ vite.config.ts                # Configuración de Vite, alias y testing
+├─ vercel.json                   # Rewrites para SPA y serverless functions
+├─ firestore.rules               # Reglas de seguridad de Firestore
+├─ tailwind.config.js            # Configuración de Tailwind CSS
+├─ postcss.config.js             # Configuración de PostCSS
+├─ eslint.config.js              # Reglas de ESLint
+├─ README.md                     # Documentación del proyecto
+│
 ├─ src/
-│  ├─ assets/                    # Imágenes y assets públicos
+│  ├─ main.tsx                   # Punto de entrada de React
+│  ├─ App.tsx                    # Enrutamiento principal, providers y lazy loading
+│  ├─ App.css                    # Estilos específicos del componente App
+│  ├─ index.css                  # Estilos globales, utilidades Tailwind y componentes base
+│  │
+│  ├─ assets/                    # Imágenes y recursos estáticos
 │  │
 │  ├─ pages/                     # Vistas SPA
 │  │  ├─ LoginPage.tsx           # Formulario de inicio de sesión
@@ -61,90 +97,70 @@ matecode/
 │  │  └─ NotFoundPage.tsx        # Página 404 personalizada
 │  │
 │  ├─ components/                # Componentes UI reutilizables
-│  │  ├─ Header.tsx              # Cabecera con info de usuario y logout
-│  │  ├─ TodoForm.tsx            # Formulario crear/editar tarea
-│  │  ├─ TodoList.tsx            # Lista de tareas con drag & drop
-│  │  ├─ TaskItem.tsx            # Item individual de tarea
+│  │  ├─ Header.tsx              # Cabecera con información de usuario y logout
+│  │  ├─ TodoForm.tsx            # Formulario crear/editar tarea con validaciones
+│  │  ├─ TodoList.tsx            # Lista de tareas con drag & drop y estados vacíos
+│  │  ├─ TaskItem.tsx            # Item individual de tarea con acciones
 │  │  ├─ TaskFilters.tsx         # Filtros: Todas / Pendientes / Completadas
 │  │  ├─ TaskSummary.tsx         # Resumen de contadores de tareas
 │  │  ├─ EmailButton.tsx         # Botón envío resumen por email
-│  │  ├─ DeleteButton.tsx        # Modal confirmación eliminar tarea
+│  │  ├─ DeleteButton.tsx        # Modal confirmación eliminar tarea con focus trap
 │  │  ├─ LinkPasswordForm.tsx    # Formulario vinculación password a Google
 │  │  └─ ui/
-│  │     └─ Toast.tsx            # Sistema de notificaciones toast
+│  │     └─ Toast.tsx            # Sistema de notificaciones toast (context + provider)
 │  │
 │  ├─ features/                  # Lógica de dominio por contexto
 │  │  ├─ auth/
-│  │  │  └─ AuthContext.tsx      # Contexto de autenticación
+│  │  │  └─ AuthContext.tsx      # Contexto de autenticación (estado, login, register, google, logout)
 │  │  └─ tasks/
-│  │     └─ TasksContext.tsx     # Contexto de gestión de tareas
+│  │     └─ TasksContext.tsx     # Contexto de gestión de tareas (CRUD, filtros, loading)
 │  │
 │  ├─ services/                  # Integraciones externas
-│  │  ├─ firebase.ts             # Inicialización Firebase Auth + Firestore
-│  │  ├─ auth.ts                 # Servicios: login, register, google, logout
-│  │  └─ tasks.ts                # Servicios CRUD Firestore
+│  │  ├─ firebase.ts             # Inicialización de Firebase Auth y Firestore
+│  │  ├─ auth.ts                 # Servicios: login, register, google, logout, vincular contraseña
+│  │  └─ tasks.ts                # Servicios CRUD Firestore (create, update, delete, getByUser)
 │  │
 │  ├─ hooks/                     # Hooks personalizados
-│  │  ├─ useForm.ts              # Hook genérico para formularios
-│  │  └─ useTaskStats.ts         # Estadísticas de tareas (total, pendientes, completadas)
+│  │  ├─ useForm.ts              # Hook genérico para formularios (estado, cambios, reset)
+│  │  └─ useTaskStats.ts         # Derivación de estadísticas: total, pendientes, completadas
 │  │
 │  ├─ routes/
-│  │  ├─ ProtectedRoute.tsx      # Guard de rutas privadas
-│  │  └─ PublicRoute.tsx         # Guard de rutas públicas (redirige si hay sesión)
+│  │  ├─ ProtectedRoute.tsx      # Guard de rutas privadas con estado de carga
+│  │  └─ PublicRoute.tsx         # Guard de rutas públicas con redirección post-login
 │  │
 │  ├─ types/
-│  │  ├─ index.ts                # Tipos: Task, AppUser, AuthContextType, TasksContextType
-│  │  └─ firebase.d.ts           # Declaraciones TypeScript para Firebase
+│  │  ├─ index.ts                # Tipos e interfaces: Task, AppUser, AuthContextType, TasksContextType
+│  │  └─ firebase.d.ts           # Declaraciones TypeScript para módulos de Firebase
 │  │
-│  ├─ utils/
-│  │  └─ validators.ts           # Validadores: email, password, fechas, truncate
-│  │
-│  ├─ App.css                    # Estilos del componente raíz
-│  ├─ index.css                  # Estilos globales, utilidades Tailwind, shimmer/skeleton
-│  ├─ App.tsx                    # Enrutamiento principal y providers
-│  └─ main.tsx                   # Punto de entrada
+│  └─ utils/
+│     └─ validators.ts           # Validadores: email, password, formateo de fechas, truncate
 │
 ├─ api/
-│  └─ send-summary.ts            # Vercel Serverless Function: AWS SES email
+│  └─ send-summary.ts            # Vercel Serverless Function: intermediario AWS SES
 │
-├─ tests/
-│  ├─ setup.ts                   # Configuración global de tests
-│  ├─ mocks/
-│  │  └─ firebase.ts             # Mocks de Firebase Auth
-│  ├─ validators.test.ts         # Tests unitarios de validadores
-│  ├─ services/
-│  │  ├─ auth.test.ts            # Tests servicios de autenticación
-│  │  └─ tasks.test.ts           # Tests servicios de tareas
-│  ├─ components/
-│  │  ├─ Header.test.tsx
-│  │  ├─ TaskFilters.test.tsx
-│  │  ├─ TaskSummary.test.tsx
-│  │  ├─ TodoForm.test.tsx
-│  │  ├─ DeleteButton.test.tsx
-│  │  └─ EmailButton.test.tsx
-│  ├─ pages/
-│  │  ├─ LoginPage.test.tsx
-│  │  └─ RegisterPage.test.tsx
-│  ├─ AuthContext.test.tsx
-│  ├─ TasksContext.test.tsx
-│  ├─ ProtectedRoute.test.tsx
-│  └─ dummy.test.ts
-│
-├─ .env.example                  # Variables de entorno (plantilla)
-├─ .env.local                    # Variables locales (NO se sube)
-├─ .gitignore                    # Exclusiones: .env, node_modules, dist, etc.
-├─ tailwind.config.js            # Configuración de Tailwind CSS
-├─ postcss.config.js             # Configuración de Postcss
-├─ vercel.json                   # Configuración de deploy y rewrites
-├─ firestore.rules               # Reglas de seguridad Firestore
-├─ package.json                  # Dependencias y scripts
-├─ tsconfig.json                 # Configuración TypeScript (project references)
-├─ vite.config.ts                # Configuración Vite + Vitest
-├─ eslint.config.js              # Reglas ESLint
-└─ README.md                     # Documentación del proyecto
+└─ tests/
+   ├─ setup.ts                   # Configuración global de tests (jsdom, mocks)
+   ├─ mocks/
+   │  └─ firebase.ts             # Mocks de Firebase Auth y Firestore
+   ├─ validators.test.ts         # Tests unitarios de validadores
+   ├─ services/
+   │  ├─ auth.test.ts            # Tests de servicios de autenticación
+   │  └─ tasks.test.ts           # Tests de servicios de tareas
+   ├─ components/
+   │  ├─ Header.test.tsx
+   │  ├─ TaskFilters.test.tsx
+   │  ├─ TaskSummary.test.tsx
+   │  ├─ TodoForm.test.tsx
+   │  ├─ DeleteButton.test.tsx
+   │  └─ EmailButton.test.tsx
+   ├─ pages/
+   │  ├─ LoginPage.test.tsx
+   │  └─ RegisterPage.test.tsx
+   ├─ AuthContext.test.tsx
+   ├─ TasksContext.test.tsx
+   ├─ ProtectedRoute.test.tsx
+   └─ dummy.test.ts
 ```
-
----
 
 ## ✨ Características principales
 

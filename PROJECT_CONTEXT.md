@@ -80,7 +80,7 @@ api/
 
 ## Current Status
 - Build and lint pass.
-- All 57 tests pass (14 test files).
+- All 70 tests pass (14 test files).
 - `vercel.json` configured with SPA fallback (`/(.*) -> /index.html`).
 - `AuthContext` handlers no longer throw errors; they set error state only.
 - `ProtectedRoute.test.tsx` fixed with `vi.doMock` + dynamic import pattern.

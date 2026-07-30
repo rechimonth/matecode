@@ -1,5 +1,7 @@
 # MateCode
 
+**URL de producción**: https://matecode-lyart.vercel.app
+
 **MateCode** es una aplicación web SPA de gestión de tareas diseñada para pequeñas empresas y equipos que necesitan organizar el trabajo diario de forma colaborativa, persistente y accesible desde cualquier dispositivo.
 
 El proyecto implementa un flujo completo de autenticación, CRUD de tareas con sincronización en tiempo real, notificaciones por email y despliegue en producción, aplicando buenas prácticas de arquitectura, tipado fuerte con TypeScript, testing automatizado y control de versiones profesional.
@@ -551,7 +553,7 @@ MIT — ver archivo [LICENSE](LICENSE) para más detalles.
 ## 👤 Autor
 
 **MateCode** — Proyecto desarrollado como Proyecto Integrador.  
-Repositorio: _[Enlace a GitHub pendiente de publicación]_
+Repositorio:(https://github.com/rechimonth/matecode.)
 
 ---
 

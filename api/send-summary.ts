@@ -106,7 +106,15 @@ export default async function handler(req: any, res: any) {
 
     let body: { email: string; name?: string; userId: string };
     try {
-      body = await req.json() as typeof body;
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) {
+        chunks.push(chunk as Buffer);
+      }
+      const raw = Buffer.concat(chunks).toString("utf8");
+      if (!raw.trim()) {
+        return res.status(400).json({ error: "Empty body" });
+      }
+      body = JSON.parse(raw) as typeof body;
     } catch {
       return res.status(400).json({ error: "Invalid JSON" });
     }

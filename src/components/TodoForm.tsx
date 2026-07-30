@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useRef } from "react";
 import { useAuth } from "../features/auth/AuthContext";
 import { useTasks } from "../features/tasks/TasksContext";
 import { Task } from "../types";
@@ -21,7 +21,6 @@ export const TodoForm = ({ initialTask, onCancel }: TodoFormProps) => {
   const formRef = useRef<HTMLDivElement>(null);
 
   const isEditing = !!initialTask;
-  const hasChanges = title !== (initialTask?.title || "") || description !== (initialTask?.description || "") || dueDate !== (initialTask?.dueDate ? new Date(initialTask.dueDate).toISOString().split("T")[0] : "") || priority !== (initialTask?.priority || "medium");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

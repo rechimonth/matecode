@@ -61,18 +61,28 @@ function getAllowedOrigins(): string[] {
   return origins.split(",").map((o) => o.trim()).filter(Boolean);
 }
 
+function getHeader(req: Request, name: string): string | null {
+  const value = req.headers.get(name);
+  if (typeof value === "string") return value;
+  const anyHeaders = req.headers as unknown as Record<string, string | string[] | undefined>;
+  const candidate = anyHeaders[name] || anyHeaders[name.toLowerCase()];
+  if (typeof candidate === "string") return candidate;
+  if (Array.isArray(candidate)) return candidate[0] ?? null;
+  return null;
+}
+
 export default async function handler(req: Request) {
   try {
     if (req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { "Content-Type": "application/json" } });
     }
 
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+    const ip = getHeader(req, "x-forwarded-for")?.split(",")[0]?.trim() || getHeader(req, "x-real-ip") || "unknown";
     if (!checkRateLimit(ip)) {
       return new Response(JSON.stringify({ error: "Too many requests" }), { status: 429, headers: { "Content-Type": "application/json" } });
     }
 
-    const origin = req.headers.get("origin");
+    const origin = getHeader(req, "origin");
     const allowedOrigins = getAllowedOrigins();
     if (allowedOrigins.length > 0 && origin && !allowedOrigins.includes(origin)) {
       return new Response(JSON.stringify({ error: "Origin not allowed" }), { status: 403, headers: { "Content-Type": "application/json" } });

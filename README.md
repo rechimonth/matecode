@@ -449,6 +449,29 @@ Breakpoints utilizados en Tailwind:
 
 ---
 
+## 📘 Manual de usuario
+
+### 1. Acceso
+- Entrá a la URL de producción: https://matecode-lyart.vercel.app
+- Si no tenés cuenta, hacé clic en **Registrate** y creá una cuenta con email y contraseña, o usá **Google**.
+- Si ya tenés cuenta, ingresá con **email/contraseña** o con **Google**.
+
+### 2. Panel de tareas
+- En el panel vas a ver el resumen de tareas y los filtros **Todas / Pendientes / Completadas**.
+- Para crear una tarea, completá **título**, **descripción**, opcionalmente la **fecha de vencimiento** y la **prioridad**, y luego hacé clic en **Crear tarea**.
+- Para editar una tarea, usá el ícono de lápiz. Los cambios se guardan con **Guardar cambios**.
+- Para marcarla como completada, hacé clic en el botón amarillo **Marcar completada**. Para desmarcarla, hacé doble clic en el botón verde **Completada**.
+- Para eliminarla, hacé clic en **Eliminar**, confirmá en el modal y listo.
+
+### 3. Resumen por email
+- Hacé clic en **Enviar resumen por email**.
+- La app consulta Firestore y te envía un resumen con el estado actual de tus tareas.
+
+### 4. Cerrar sesión
+- Hacé clic en **Cerrar Sesión** en la cabecera.
+
+---
+
 ## 🤖 Uso de IA en el desarrollo
 
 Durante el desarrollo de MateCode se utilizó inteligencia artificial como apoyo técnico, no como reemplazo de la toma de decisiones.

@@ -1,6 +1,8 @@
 ﻿# MateCode
 
 **URL de producción**: https://matecode-lyart.vercel.app
+<img width="1254" height="1254" alt="logo" src="https://github.com/user-attachments/assets/198528f0-43b2-4219-b2ba-eb25fab1ccaf" />
+
 
 **MateCode** es una aplicación web SPA de gestión de tareas diseñada para pequeñas empresas y equipos que necesitan organizar el trabajo diario de forma colaborativa, persistente y accesible desde cualquier dispositivo.
 
@@ -599,14 +601,17 @@ Repositorio: (https://github.com/rechimonth/matecode)
 
 ## 📸 Capturas
 
-> Agregar capturas de pantalla en `docs/images/` y referenciarlas aquí.
 
 | Sección | Imagen |
 |---------|--------|
-| Login | `docs/images/login.jpeg` |
-| Dashboard | `docs/images/dashboard.jpeg` |
-| Mobile | `docs/images/mobile.jpeg` |
-| Email | `docs/images/email.jpeg` |
+| Login | `docs/images/login.jpeg` |<img width="720" height="1600" alt="login" src="https://github.com/user-attachments/assets/f98a8646-abaf-4359-a921-d73220a4d1dc" />
+
+| Dashboard | `docs/images/dashboard.jpeg` |<img width="720" height="1600" alt="dashboard" src="https://github.com/user-attachments/assets/209966e5-134f-49f3-a1bf-5072635b8537" />
+
+| Mobile | `docs/images/mobile.jpeg` |<img width="720" height="1600" alt="mobile" src="https://github.com/user-attachments/assets/c65d1d76-45eb-443e-b836-d4eae8f6a2cb" />
+
+| Email | `docs/images/email.jpeg` |<img width="720" height="1600" alt="email" src="https://github.com/user-attachments/assets/9097d709-1cf0-4a1c-9c8b-43736da2b530" />
+
 
 
 

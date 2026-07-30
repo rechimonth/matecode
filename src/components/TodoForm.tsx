@@ -17,8 +17,6 @@ export const TodoForm = ({ initialTask, onCancel }: TodoFormProps) => {
   const [dueDate, setDueDate] = useState(initialTask?.dueDate ? new Date(initialTask.dueDate).toISOString().split("T")[0] : "");
   const [priority, setPriority] = useState<Task["priority"]>(initialTask?.priority || "medium");
   const [error, setError] = useState<string | null>(null);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -62,36 +60,18 @@ export const TodoForm = ({ initialTask, onCancel }: TodoFormProps) => {
   };
 
   const handleCancelClick = () => {
-    if (isEditing && hasChanges) {
-      setShowConfirm(true);
-    } else {
-      performCancel();
-    }
+    setTitle("");
+    setDescription("");
+    setDueDate("");
+    setPriority("medium");
+    setError(null);
   };
-
-  const performCancel = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      onCancel();
-    }, 300);
-  };
-
-  useEffect(() => {
-    if (!showConfirm) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setShowConfirm(false);
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [showConfirm]);
 
   return (
     <>
       <div
         ref={formRef}
-        className={`card mb-6 transition-all duration-300 ${isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}
+        className="card mb-6"
       >
         <form onSubmit={handleSubmit}>
           <h2 className="text-lg font-semibold mb-4 text-gray-900">
@@ -175,35 +155,6 @@ export const TodoForm = ({ initialTask, onCancel }: TodoFormProps) => {
           </div>
         </form>
       </div>
-
-      {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" aria-labelledby="cancel-dialog-title">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
-            <h3 id="cancel-dialog-title" className="text-lg font-semibold text-gray-900 mb-2">
-              Confirmar cancelación
-            </h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Tenés cambios sin guardar. Si cancelás, se perderán las modificaciones.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-              >
-                Volver
-              </button>
-              <button
-                type="button"
-                onClick={performCancel}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-              >
-                Perder cambios
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

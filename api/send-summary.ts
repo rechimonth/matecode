@@ -2,8 +2,7 @@ export const runtime = "nodejs";
 export const preferredRegion = "iad1";
 
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, collection, query, where, getDocs, Timestamp } from "firebase/firestore";
+import { getAdminDb } from "./lib/firebase-admin";
 
 const ses = new SESClient({
   region: process.env.AWS_REGION || "southamerica-east1",
@@ -13,18 +12,6 @@ const ses = new SESClient({
   },
 });
 
-const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || "",
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN || "",
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "",
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID || "",
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
-
 function toDate(value: unknown): Date {
   if (typeof value === "object" && value !== null && "toDate" in value && typeof (value as { toDate: () => Date }).toDate === "function") {
     return (value as { toDate: () => Date }).toDate();
@@ -33,24 +20,18 @@ function toDate(value: unknown): Date {
   return new Date(value as string);
 }
 
-// Rate limiting simple por IP (en memoria)
 const rateLimit = new Map<string, { count: number; lastReset: number }>();
 const RATE_LIMIT_MAX = 10;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hora
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const entry = rateLimit.get(ip);
-
   if (!entry || now - entry.lastReset > RATE_LIMIT_WINDOW_MS) {
     rateLimit.set(ip, { count: 1, lastReset: now });
     return true;
   }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return false;
-  }
-
+  if (entry.count >= RATE_LIMIT_MAX) return false;
   entry.count++;
   return true;
 }
@@ -69,6 +50,13 @@ function getHeader(req: Request, name: string): string | null {
   if (typeof candidate === "string") return candidate;
   if (Array.isArray(candidate)) return candidate[0] ?? null;
   return null;
+}
+
+function assertString(value: unknown, label: string): string {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new Error(`Server misconfiguration: ${label}`);
+  }
+  return value;
 }
 
 export default async function handler(req: Request) {
@@ -95,26 +83,15 @@ export default async function handler(req: Request) {
       return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json" } });
     }
 
-    const { email, name, userId } = body;
-
-    if (!email || !userId) {
-      return new Response(JSON.stringify({ error: "Email and userId are required" }), { status: 400, headers: { "Content-Type": "application/json" } });
-    }
-
-    if (!firebaseConfig.projectId) {
-      console.error("Missing Firebase project ID");
-      return new Response(JSON.stringify({ error: "Server misconfiguration: missing Firebase project ID" }), { status: 500, headers: { "Content-Type": "application/json" } });
-    }
-
-    if (!process.env.SES_FROM_EMAIL) {
-      console.error("Missing SES_FROM_EMAIL");
-      return new Response(JSON.stringify({ error: "Server misconfiguration: missing SES sender email" }), { status: 500, headers: { "Content-Type": "application/json" } });
-    }
+    const email = assertString(body.email, "email is required");
+    const userId = assertString(body.userId, "userId is required");
+    const fromEmail = assertString(process.env.SES_FROM_EMAIL, "SES_FROM_EMAIL is required");
 
     let tasks: Array<{ title: string; status: string; updatedAt: string }> = [];
     try {
-      const q = query(collection(db, "tasks"), where("userId", "==", userId));
-      const snapshot = await getDocs(q);
+      const db = getAdminDb();
+      const q = db.collection("tasks").where("userId", "==", userId);
+      const snapshot = await q.get();
       tasks = snapshot.docs.map((d) => {
         const data = d.data();
         return {
@@ -140,7 +117,7 @@ export default async function handler(req: Request) {
         <body style="font-family:Inter,sans-serif;background:#f3f4f6;padding:24px">
           <div style="max-width:600px;margin:0 auto;background:#fff;padding:32px;border-radius:8px">
             <h1 style="color:#2563eb;margin-bottom:8px">Resumen de tareas - MateCode</h1>
-            <p style="color:#4b5563;margin-bottom:24px">Hola ${name || ""}, tenés <strong>${pendingCount}</strong> tareas pendientes y <strong>${completedCount}</strong> completadas.</p>
+            <p style="color:#4b5563;margin-bottom:24px">Hola ${body.name || ""}, tenés <strong>${pendingCount}</strong> tareas pendientes y <strong>${completedCount}</strong> completadas.</p>
             <ul style="padding-left:24px;color:#1f2937;line-height:1.8">${taskList}</ul>
             <p style="color:#6b7280;margin-top:24px;font-size:14px">MateCode Gestor de Tareas</p>
           </div>
@@ -149,7 +126,7 @@ export default async function handler(req: Request) {
     `;
 
     const command = new SendEmailCommand({
-      Source: process.env.SES_FROM_EMAIL || "",
+      Source: fromEmail,
       Destination: { ToAddresses: [email] },
       Message: {
         Subject: { Data: "Resumen de tareas - MateCode", Charset: "UTF-8" },

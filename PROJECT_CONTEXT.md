@@ -37,6 +37,8 @@ api/
 - **Vercel Functions** for email sending to keep AWS credentials server-side.
 - **`dnd-kit`** for sortable task lists.
 - **`import.meta.env.VITE_*`** for frontend env vars; server-side secrets stay in Vercel dashboard.
+- **`firebase-admin`** in `api/send-summary.ts` to bypass Firestore rules and read tasks server-side.
+- **`FIREBASE_SERVICE_ACCOUNT_KEY`** env var stores the service account JSON for admin access.
 
 ## Important Patterns
 - Tests use `vi.doMock` + `vi.resetModules()` + dynamic `await import()` for components consuming contexts.
@@ -54,13 +56,13 @@ api/
 | `npm run test:watch` | Vitest watch mode |
 
 ## Test Accounts
-- **Email/Password**: `pruebametacode@gmail.com` / `con12345678` (funciona en local y producción)
+- Usar cuentas de prueba creadas en Firebase Console para testing.
 
 ## Environment
 - `.env` (gitignored): Firebase config + `VITE_API_URL`
 - Vercel env vars:
   - Frontend: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_API_URL`
-  - Backend (API route): `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SES_FROM_EMAIL`, `SES_CONFIGURATION_SET`, `ALLOWED_ORIGINS`
+  - Backend (API route): `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SES_FROM_EMAIL`, `SES_CONFIGURATION_SET`, `ALLOWED_ORIGINS`, `FIREBASE_SERVICE_ACCOUNT_KEY`
 
 ## SES Configuration
 - Email verificado: `pruebametacode@gmail.com` en región `sa-east-1`.

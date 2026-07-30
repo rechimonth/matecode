@@ -123,7 +123,7 @@ export const DeleteButton = ({ onConfirm, title, disabled = false }: DeleteButto
           Confirmar eliminación
         </h3>
         <p className="text-sm text-gray-600 mb-6">
-          ¿Estás seguro de que querés eliminar la tarea <strong>"{title}"</strong>? Esta acción no se puede deshacer.
+          ¿Estás seguro de que querés eliminar la tarea <strong>&quot;{title}&quot;</strong>? Esta acción no se puede deshacer.
         </p>
 
         {error && (

@@ -155,7 +155,7 @@ matecode/
 - **Eliminar** tarea con modal de confirmación y focus trap.
 - **Marcar como completada** con optimistic update.
 - **Filtros** por estado: Todas, Pendientes, Completadas.
-- **Drag & drop** para reordenar tareas (`dnd-kit`).
+- **Drag & drop** para reordenar tareas (`dnd-kit`). Nota: la reordenación visual se aplica en la interfaz, pero el orden no se persiste en Firestore; al recargar, las tareas vuelven a ordenarse por fecha de creación.
 - Sincronización automática de la UI tras operaciones CRUD.
 
 ### Persistencia
@@ -308,7 +308,7 @@ ALLOWED_ORIGINS=https://tu-app.vercel.app,https://www.tu-app.vercel.app
 Se eligió React por su ecosistema maduro, componentización y soporte de TypeScript. El tipado fuerte reduce errores en tiempo de desarrollo y mejora la mantenibilidad. Las interfaces (`Task`, `User`, `AuthContextType`, `TasksContextType`) centralizan los contratos de datos.
 
 ### Firebase (Auth + Firestore)
-Firebase proporciona autenticación y base de datos en tiempo real sin necesidad de backend propio. `onAuthStateChanged` maneja la sesión persistente, mientras que `onSnapshot` (vía `getTasksByUser` en el contexto) mantiene la UI sincronizada. Las reglas de Firestore garantizan el aislamiento por usuario.
+Firebase proporciona autenticación y base de datos en tiempo real sin necesidad de backend propio. `onAuthStateChanged` maneja la sesión persistente, mientras que el contexto recarga las tareas tras cada mutación para mantener la UI actualizada. Las reglas de Firestore garantizan el aislamiento por usuario.
 
 ### Context API
 Se utilizaron dos contextos principales:
@@ -407,7 +407,7 @@ La aplicación está diseñada para desplegarse en **Vercel**:
    - Rewrite `/api/(.*)` hacia la serverless function.
    - Rewrite `/(.*)` hacia `index.html` para soporte SPA.
 
-> **URL de producción**: https://matecodeapp-d94ca.vercel.app/
+> **URL de producción**: https://matecode-lyart.vercel.app
 
 ---
 

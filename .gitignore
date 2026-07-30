@@ -17,7 +17,8 @@ Thumbs.db
 
 .kilo/
 
-.PROJECT_CONTEXT.md
+PROJECT_CONTEXT.md
 .api/send-summary.d.ts
-.tsconfig.api.tsbuildinfo api/send-summary.d.ts
+tsconfig.api.tsbuildinfo
+api/send-summary.d.ts
 tsconfig.api.tsbuildinfo

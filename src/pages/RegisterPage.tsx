@@ -48,8 +48,10 @@ export const RegisterPage = () => {
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
+                  id="register-email"
+                  name="email"
                   className="input text-left"
                   type="email"
                   value={email}
@@ -58,9 +60,11 @@ export const RegisterPage = () => {
                 />
               </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+              <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
               <div className="relative">
                 <input
+                  id="register-password"
+                  name="password"
                   className="input text-left"
                   type="password"
                   value={password}
@@ -70,9 +74,11 @@ export const RegisterPage = () => {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+              <label htmlFor="register-confirm" className="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
               <div className="relative">
                 <input
+                  id="register-confirm"
+                  name="confirmPassword"
                   className="input text-left"
                   type="password"
                   value={confirmPassword}

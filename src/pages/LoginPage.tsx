@@ -65,8 +65,10 @@ export const LoginPage = () => {
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
+                  id="login-email"
+                  name="email"
                   className="input text-left"
                   type="email"
                   value={email}
@@ -75,9 +77,11 @@ export const LoginPage = () => {
                 />
               </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+              <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
               <div className="relative">
                 <input
+                  id="login-password"
+                  name="password"
                   className="input text-left"
                   type="password"
                   value={password}

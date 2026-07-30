@@ -2,7 +2,8 @@ export const runtime = "nodejs";
 export const preferredRegion = "iad1";
 
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
-import { getAdminDb } from "./lib/firebase-admin";
+import { initializeApp, credential } from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 const ses = new SESClient({
   region: process.env.AWS_REGION || "southamerica-east1",
@@ -11,6 +12,36 @@ const ses = new SESClient({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
   },
 });
+
+let adminDb: ReturnType<typeof getFirestore> | null = null;
+
+function getAdminDb() {
+  if (adminDb) return adminDb;
+
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (!serviceAccountJson) {
+    throw new Error("Server misconfiguration: FIREBASE_SERVICE_ACCOUNT_KEY is required");
+  }
+
+  let serviceAccount: {
+    project_id: string;
+    client_email: string;
+    private_key: string;
+  };
+  try {
+    serviceAccount = JSON.parse(serviceAccountJson) as typeof serviceAccount;
+  } catch {
+    throw new Error("Server misconfiguration: FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON");
+  }
+
+  const app = initializeApp({
+    credential: credential.cert(serviceAccount as Parameters<typeof credential.cert>[0]),
+    projectId: serviceAccount.project_id,
+  });
+
+  adminDb = getFirestore(app);
+  return adminDb;
+}
 
 function toDate(value: unknown): Date {
   if (typeof value === "object" && value !== null && "toDate" in value && typeof (value as { toDate: () => Date }).toDate === "function") {

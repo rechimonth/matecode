@@ -36,7 +36,7 @@ Los usuarios pueden registrarse, autenticarse, crear y gestionar sus tareas pers
 | Cloud Firestore | ^10.14.1 | Base de datos NoSQL en tiempo real |
 | AWS SDK (SES) | ^3.600.0 | Envío de emails transaccionales |
 | React Router | ^7.18.1 | Enrutamiento SPA |
-| @dnd-kit/core / @dnd-kit/sortable | ^6.3.1 / ^10.0.0 | Drag & drop para reordenar tareas |
+| @dnd-kit/core / @dnd-kit/sortable | ^6.3.1 / ^10.0.0 | Drag & drop para reordenar tareas | Biblioteca accesible, ligera y con soporte de teclado |
 | lucide-react | ^1.27.0 | Iconografía SVG |
 | Vitest | ^1.6.0 | Framework de testing |
 | React Testing Library | ^16.0.0 | Tests de componentes |
@@ -44,7 +44,7 @@ Los usuarios pueden registrarse, autenticarse, crear y gestionar sus tareas pers
 
 ---
 
-## 📁 Estructura del proyecto
+# <div align=`"center`">![React](https://img.shields.io/badge/React-19.2.7-61DAFB?logo=react)![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178C6?logo=typescript)![Firebase](https://img.shields.io/badge/Firebase-10.14.1-FFCA28?logo=firebase)![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?logo=vercel)`n`n**Gestor estratégico de tareas para pequeñas empresas**`n`n[Demo en producción](https://matecode-lyart.vercel.app) · [Reportar bug](https://github.com/rechimonth/matecode/issues) · [Solicitar feature](https://github.com/rechimonth/matecode/issues)`n`n</div>`n`n---`n`n## 📁 Estructura del proyecto
 
 ```
 matecode/
@@ -91,7 +91,7 @@ matecode/
 │  │  └─ PublicRoute.tsx         # Guard de rutas públicas (redirige si hay sesión)
 │  │
 │  ├─ types/
-│  │  ├─ index.ts                # Tipos: Task, User, AuthContextType, TasksContextType
+│  │  ├─ index.ts                # Tipos: Task, AppUser, AuthContextType, TasksContextType
 │  │  └─ firebase.d.ts           # Declaraciones TypeScript para Firebase
 │  │
 │  ├─ utils/
@@ -199,7 +199,7 @@ matecode/
 - Loading states en todos los botones de acción.
 
 ### Testing
-- **~65 casos de prueba** con Vitest y React Testing Library.
+- **18 archivos de test** con Vitest y React Testing Library.
 - Cobertura de servicios, contextos, componentes y páginas.
 - Mocks de Firebase Auth y Firestore.
 - Tests de casos de error y bordes.
@@ -292,6 +292,8 @@ ALLOWED_ORIGINS=https://tu-app.vercel.app,https://www.tu-app.vercel.app
 ```
 
 > **Importante**: El archivo `.env` nunca debe subirse al repositorio. Utilizá `.env.example` como plantilla. Las variables de Vercel se configuran en el dashboard de despliegue.
+
+> **Nota**: FIREBASE_SERVICE_ACCOUNT_KEY debe contener el JSON completo de la service account de Firebase, codificado como string.
 
 ---
 
@@ -478,6 +480,40 @@ Breakpoints utilizados en Tailwind:
 
 ---
 
+---
+
+## 🛠️ Troubleshooting
+
+### Error: `Failed to fetch tasks` en `/api/send-summary`
+
+Este error indica que la función serverless no puede inicializar Firebase Admin. Verificá:
+
+1. Que la variable `FIREBASE_SERVICE_ACCOUNT_KEY` esté configurada en Vercel con el JSON completo de la service account.
+2. Que la variable tenga el formato correcto (JSON stringificado, no objeto).
+3. Que las credenciales de Firebase sean válidas y no estén expiradas.
+
+### Error: `Invalid JSON` en `/api/send-summary`
+
+Este error ocurre cuando el frontend envía un payload con formato incorrecto. Verificá:
+
+1. Que el frontend envíe `email`, `name` y `userId` en el body.
+2. Que la petición use `Content-Type: application/json`.
+3. Que el usuario esté autenticado antes de enviar el email.
+
+### Error: `auth/network-request-failed` en login/registro
+
+1. Verificá tu conexión a internet.
+2. Confirmá que las variables de Firebase (`VITE_FIREBASE_*`) estén correctamente configuradas.
+3. Verificá que el dominio esté autorizado en Firebase Console > Authentication > Settings.
+
+### Error: `Permission denied` en Firestore
+
+1. Verificá que las reglas de Firestore estén desplegadas.
+2. Confirmá que el usuario esté autenticado.
+3. Verificá que el `userId` en la tarea coincida con el `uid` del usuario.
+
+---
+
 ## 🤖 Uso de IA en el desarrollo
 
 Durante el desarrollo de MateCode se utilizó inteligencia artificial como apoyo técnico, no como reemplazo de la toma de decisiones.
@@ -503,7 +539,7 @@ Durante el desarrollo de MateCode se utilizó inteligencia artificial como apoyo
 ### Patrones y buenas prácticas descubiertos
 - Separar la lógica de dominio en `features/` mejora la testabilidad y mantenibilidad.
 - El uso de Context Providers con `useCallback` y `useMemo` previene re-renders innecesarios.
-- Los alias de paths (`@/*`) en Vite aceleran las importaciones y hacen el código más limpio.
+- Los alias de paths (`@`) en Vite aceleran las importaciones y hacen el código más limpio.
 - La combinación de `useState` + `useEffect` con flags de cancelación (`cancelled`) evita memory leaks en suscripciones asíncronas.
 
 ### Validaciones manuales realizadas
@@ -550,7 +586,7 @@ Por favor, asegurarse de que:
 
 ## 📄 Licencia
 
-MIT — ver archivo [LICENSE](LICENSE) para más detalles.
+MIT License — consultá el archivo LICENSE para más detalles.
 
 ---
 
@@ -571,4 +607,13 @@ Repositorio: (https://github.com/rechimonth/matecode)
 | Dashboard | `docs/images/dashboard.jpeg` |
 | Mobile | `docs/images/mobile.jpeg` |
 | Email | `docs/images/email.jpeg` |
+
+
+
+
+
+
+
+
+
 

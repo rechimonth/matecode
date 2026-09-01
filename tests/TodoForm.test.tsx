@@ -1,12 +1,13 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TodoForm } from "../src/components/TodoForm";
 import type { Task } from "../src/types";
 
-const addTask = vi.fn();
-const updateTask = vi.fn();
+const { addTask, updateTask } = vi.hoisted(() => ({
+  addTask: vi.fn(),
+  updateTask: vi.fn(),
+}));
 
 vi.mock("../src/features/auth/AuthContext", () => ({
   useAuth: () => ({ user: { uid: "user-1", email: "user@example.com", displayName: "User", photoURL: null } }),
@@ -89,22 +90,34 @@ describe("TodoForm", () => {
     expect(updateTask).not.toHaveBeenCalled();
   });
 
-  it("blocks blank or oversized values", async () => {
+  it("blocks blank values", async () => {
     const user = userEvent.setup();
     render(<TodoForm onCancel={vi.fn()} />);
-
     await user.click(screen.getByRole("button", { name: "Crear tarea" }));
     expect(screen.getByRole("alert")).toHaveTextContent("El título es requerido");
     expect(addTask).not.toHaveBeenCalled();
   });
 
-  it("cancels edit mode and invokes onCancel", async () => {
+  it("cancel invokes onCancel and resets local values", async () => {
     const user = userEvent.setup();
     const onCancel = vi.fn();
     render(<TodoForm initialTask={baseTask} onCancel={onCancel} />);
     await user.click(screen.getByRole("button", { name: "Cancelar edición de tarea" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText("Título")).toHaveValue("");
+    expect(screen.getByLabelText("Descripción")).toHaveValue("");
+    expect(screen.getByLabelText("Prioridad")).toHaveValue("medium");
+    expect(screen.getByLabelText("Fecha de vencimiento")).toHaveValue("");
+  });
+
+  it("syncs when the selected task changes", async () => {
+    const { rerender } = render(<TodoForm initialTask={baseTask} onCancel={vi.fn()} />);
+    expect(screen.getByLabelText("Título")).toHaveValue("Tarea existente");
+    const taskB = { ...baseTask, id: "task-2", title: "Otra tarea", description: "Otra descripción", priority: "low" as const };
+    rerender(<TodoForm initialTask={taskB} onCancel={vi.fn()} />);
+    expect(screen.getByLabelText("Título")).toHaveValue("Otra tarea");
+    expect(screen.getByLabelText("Descripción")).toHaveValue("Otra descripción");
+    expect(screen.getByLabelText("Prioridad")).toHaveValue("low");
   });
 
   it("prevents a duplicate submission while saving", async () => {
@@ -115,9 +128,9 @@ describe("TodoForm", () => {
 
     const save = screen.getByRole("button", { name: "Guardar cambios" });
     await user.click(save);
+    expect(save).toBeDisabled();
     await user.click(save);
     expect(updateTask).toHaveBeenCalledTimes(1);
-    expect(save).toBeDisabled();
     resolveUpdate?.();
   });
 });

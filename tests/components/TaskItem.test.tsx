@@ -1,9 +1,14 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TaskItem } from "../../src/components/TaskItem";
 import type { Task } from "../../src/types";
+
+const { toggleTaskStatus, deleteTask, isTaskLoading } = vi.hoisted(() => ({
+  toggleTaskStatus: vi.fn().mockResolvedValue(undefined),
+  deleteTask: vi.fn().mockResolvedValue(undefined),
+  isTaskLoading: vi.fn().mockReturnValue(false),
+}));
 
 vi.mock("@dnd-kit/sortable", () => ({
   useSortable: () => ({
@@ -18,10 +23,6 @@ vi.mock("@dnd-kit/sortable", () => ({
 vi.mock("@dnd-kit/utilities", () => ({
   CSS: { Transform: { toString: vi.fn(() => undefined) } },
 }));
-
-const toggleTaskStatus = vi.fn().mockResolvedValue(undefined);
-const deleteTask = vi.fn().mockResolvedValue(undefined);
-const isTaskLoading = vi.fn().mockReturnValue(false);
 
 vi.mock("../../src/features/tasks/TasksContext", () => ({
   useTasks: () => ({ deleteTask, toggleTaskStatus, isTaskLoading }),
@@ -55,7 +56,10 @@ const renderTask = (overrides: Partial<Task> = {}) => {
 };
 
 describe("TaskItem", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isTaskLoading.mockReturnValue(false);
+  });
 
   it("renders a pending task", () => {
     renderTask();

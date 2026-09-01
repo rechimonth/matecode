@@ -8,6 +8,12 @@ Aplicación web SPA para gestionar tareas personales de forma simple, con autent
 
 MateCode permite que un usuario autenticado cree, consulte, edite, complete y elimine sus propias tareas. El objetivo académico es demostrar un CRUD completo, autenticación, autorización por usuario, manejo de estado, validación de datos, testing y despliegue serverless.
 
+## Usuarios objetivo
+
+- Estudiantes que necesiten demostrar un CRUD full stack funcional.
+- Personas y freelancers que quieran organizar tareas personales.
+- Equipos pequeños que necesiten una herramienta simple de seguimiento.
+
 ## Funcionalidades implementadas
 
 - Registro e inicio de sesión con email/contraseña.
@@ -94,6 +100,10 @@ api/
 firestore.rules
 ```
 
+## Autenticación
+
+Firebase Auth gestiona registro, login, Google Login, persistencia de sesión y logout. `TasksContext` elimina las tareas locales al perderse la identidad autenticada para evitar reutilizar datos de otra sesión.
+
 ## CRUD
 
 **CREATE:** el usuario completa el formulario y crea una tarea pendiente.
@@ -143,7 +153,7 @@ La interfaz mantiene un diseño responsive con Tailwind CSS y controles utilizab
 
 ## Testing
 
-El repositorio contiene **19 archivos de prueba** después de la remediación, cubriendo autenticación, contexto de tareas, formularios, componentes, páginas, servicios, validadores, fechas y seguridad de la API.
+El repositorio contiene **19 archivos de prueba** después de la remediación. La suite cubre autenticación, contexto de tareas, formularios, componentes, páginas, servicios, validadores, fechas y seguridad de la API.
 
 Los escenarios críticos incluyen:
 
@@ -157,7 +167,9 @@ Los escenarios críticos incluyen:
 - API con token inválido/expirado → `401`.
 - UID verificado utilizado para Firestore.
 - `body.userId` ignorado para autorización.
+- Email dirigido al correo derivado de la identidad verificada.
 - Escaping HTML contra `<script>`, atributos y caracteres especiales.
+- JSON inválido, método no permitido, CORS no permitido, error de Firestore y rate limit.
 
 Los tests se centran en comportamiento y no utilizan snapshots como única validación.
 

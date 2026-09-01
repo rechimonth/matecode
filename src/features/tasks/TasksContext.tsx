@@ -71,10 +71,12 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [tasks, user?.uid]);
 
-  const toggleTaskStatus = useCallback(async (id: string, currentStatus: TaskStatus) => {
+  const toggleTaskStatus = useCallback(async (id: string, currentStatus?: TaskStatus) => {
     if (!user?.uid) throw new Error("Necesitás iniciar sesión para actualizar tareas");
+    const existingTask = tasks.find((task) => task.id === id);
+    const effectiveStatus = currentStatus ?? existingTask?.status ?? "pending";
     const previousTasks = tasks.map((t) => ({ ...t }));
-    const nextStatus: TaskStatus = currentStatus === "pending" ? "completed" : "pending";
+    const nextStatus: TaskStatus = effectiveStatus === "pending" ? "completed" : "pending";
 
     addLoadingTask(id);
     setError(null);

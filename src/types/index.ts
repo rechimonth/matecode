@@ -50,7 +50,7 @@ export interface TasksContextType {
   addTask: (_task: Omit<Task, "id" | "createdAt" | "updatedAt">) => Promise<void>;
   updateTask: (_id: string, _data: Partial<Pick<Task, "title" | "description" | "status" | "dueDate" | "priority">>) => Promise<void>;
   deleteTask: (_id: string) => Promise<void>;
-  toggleTaskStatus: (_id: string, _currentStatus: TaskStatus) => Promise<void>;
+  toggleTaskStatus: (_id: string, _currentStatus?: TaskStatus) => Promise<void>;
   reorderTask: (_activeId: string, _overId: string) => Promise<void>;
   clearError: () => void;
   isTaskLoading: (_id: string) => boolean;

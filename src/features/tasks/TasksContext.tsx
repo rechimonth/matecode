@@ -22,43 +22,44 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al cargar tareas";
       setError(message);
+      throw err;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const addLoadingTask = (id: string) => {
+  const addLoadingTask = useCallback((id: string) => {
     setLoadingTasks((prev) => new Set(prev).add(id));
-  };
+  }, []);
 
-  const removeLoadingTask = (id: string) => {
+  const removeLoadingTask = useCallback((id: string) => {
     setLoadingTasks((prev) => {
       const next = new Set(prev);
       next.delete(id);
       return next;
     });
-  };
+  }, []);
 
-  const isTaskLoading = (id: string) => loadingTasks.has(id);
+  const isTaskLoading = useCallback((id: string) => loadingTasks.has(id), [loadingTasks]);
 
-  const addTask = async (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => {
+  const addTask = useCallback(async (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => {
+    if (!user?.uid) throw new Error("Necesitás iniciar sesión para crear tareas");
     setError(null);
-    await createTask(task as Task);
-    if (task.userId) await refreshTasks(task.userId);
-  };
+    await createTask({ ...task, userId: user.uid });
+    await refreshTasks(user.uid);
+  }, [refreshTasks, user?.uid]);
 
-  const updateTask = async (id: string, data: Partial<Pick<Task, "title" | "description" | "status" | "dueDate" | "priority">>) => {
+  const updateTask = useCallback(async (id: string, data: Partial<Pick<Task, "title" | "description" | "status" | "dueDate" | "priority">>) => {
+    if (!user?.uid) throw new Error("Necesitás iniciar sesión para actualizar tareas");
     setError(null);
     await updateTaskService(id, data);
-    const userTask = tasks.find((t) => t.id === id);
-    if (userTask?.userId) await refreshTasks(userTask.userId);
-  };
+    await refreshTasks(user.uid);
+  }, [refreshTasks, user?.uid]);
 
-  const deleteTask = async (id: string) => {
+  const deleteTask = useCallback(async (id: string) => {
+    if (!user?.uid) throw new Error("Necesitás iniciar sesión para eliminar tareas");
     setError(null);
-    
     const previousTasks = [...tasks];
-    
     try {
       await deleteTaskService(id);
       setTasks((prev) => prev.filter((t) => t.id !== id));
@@ -68,15 +69,15 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
       setError(message);
       throw err;
     }
-  };
+  }, [tasks, user?.uid]);
 
-  const toggleTaskStatus = async (id: string, currentStatus: string) => {
+  const toggleTaskStatus = useCallback(async (id: string, currentStatus: TaskStatus) => {
+    if (!user?.uid) throw new Error("Necesitás iniciar sesión para actualizar tareas");
     const previousTasks = tasks.map((t) => ({ ...t }));
-    const nextStatus = currentStatus === "pending" ? "completed" : "pending";
+    const nextStatus: TaskStatus = currentStatus === "pending" ? "completed" : "pending";
 
     addLoadingTask(id);
-    clearError();
-
+    setError(null);
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: nextStatus } : t)));
 
     try {
@@ -89,49 +90,67 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       removeLoadingTask(id);
     }
-  };
+  }, [addLoadingTask, removeLoadingTask, tasks, user?.uid]);
 
-  const reorderTask = async (activeId: string, _overId: string) => {
-    const userTask = tasks.find((t) => t.id === activeId);
-    if (!userTask?.userId) return;
-    await refreshTasks(userTask.userId);
-  };
+  const reorderTask = useCallback(async (activeId: string, _overId: string) => {
+    if (!user?.uid || !tasks.some((task) => task.id === activeId)) return;
+    await refreshTasks(user.uid);
+  }, [refreshTasks, tasks, user?.uid]);
 
-  const clearError = () => setError(null);
+  const clearError = useCallback(() => setError(null), []);
 
-  const filteredTasks = tasks.filter((_task) => {
-    if (statusFilter === "all") return true;
-    return _task.status === statusFilter;
-  });
+  const filteredTasks = tasks.filter((task) => statusFilter === "all" || task.status === statusFilter);
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid) {
+      setTasks([]);
+      setError(null);
+      setLoading(false);
+      setLoadingTasks(new Set());
+      setStatusFilter("all");
+      return;
+    }
 
     let cancelled = false;
+    setTasks([]);
+    setError(null);
+    setLoading(true);
 
     const load = async () => {
-      setLoading(true);
-      setError(null);
       try {
         const data = await getTasksByUser(user.uid);
         if (!cancelled) setTasks(data);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Error al cargar tareas";
-        if (!cancelled) setError(message);
+        if (!cancelled) {
+          const message = err instanceof Error ? err.message : "Error al cargar tareas";
+          setError(message);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
 
-    load();
-
+    void load();
     return () => {
       cancelled = true;
     };
   }, [user?.uid]);
 
   return (
-    <TasksContext.Provider value={{ tasks: filteredTasks, loading, error, filters: { status: statusFilter }, setStatusFilter, addTask, updateTask, deleteTask, toggleTaskStatus, clearError, reorderTask, isTaskLoading }}>
+    <TasksContext.Provider value={{
+      tasks: filteredTasks,
+      loading,
+      error,
+      filters: { status: statusFilter },
+      setStatusFilter,
+      addTask,
+      updateTask,
+      deleteTask,
+      toggleTaskStatus,
+      clearError,
+      reorderTask,
+      isTaskLoading,
+    }}>
       {children}
     </TasksContext.Provider>
   );

@@ -1,4 +1,5 @@
 export type TaskStatus = "pending" | "completed";
+export type TaskPriority = "low" | "medium" | "high";
 
 export interface Task {
   id: string;
@@ -9,7 +10,7 @@ export interface Task {
   createdAt: Date;
   updatedAt: Date;
   dueDate?: Date;
-  priority?: "low" | "medium" | "high";
+  priority?: TaskPriority;
 }
 
 export interface AppUser {
@@ -49,7 +50,7 @@ export interface TasksContextType {
   addTask: (_task: Omit<Task, "id" | "createdAt" | "updatedAt">) => Promise<void>;
   updateTask: (_id: string, _data: Partial<Pick<Task, "title" | "description" | "status" | "dueDate" | "priority">>) => Promise<void>;
   deleteTask: (_id: string) => Promise<void>;
-  toggleTaskStatus: (_id: string, _currentStatus: string) => Promise<void>;
+  toggleTaskStatus: (_id: string, _currentStatus: TaskStatus) => Promise<void>;
   reorderTask: (_activeId: string, _overId: string) => Promise<void>;
   clearError: () => void;
   isTaskLoading: (_id: string) => boolean;

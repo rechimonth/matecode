@@ -1,7 +1,9 @@
 import { useState, useRef, useCallback } from "react";
+import { auth } from "../services/firebase";
 import { useTasks } from "../features/tasks/TasksContext";
 import { useAuth } from "../features/auth/AuthContext";
 import { useToast } from "./ui/Toast";
+import { validateEmail } from "../utils/validators";
 import { Mail, Loader2, XCircle } from "lucide-react";
 
 export const EmailButton = () => {
@@ -12,10 +14,12 @@ export const EmailButton = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleSend = async () => {
-    if (!user?.email || !user?.uid) return;
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(user.email)) {
+    const currentUser = auth.currentUser;
+    if (!currentUser || !user?.email) {
+      showToast("error", "Necesitás una sesión autenticada con email para enviar el resumen");
+      return;
+    }
+    if (!validateEmail(user.email)) {
       showToast("error", "Email inválido");
       return;
     }
@@ -23,30 +27,26 @@ export const EmailButton = () => {
     setSending(true);
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
+      const idToken = await currentUser.getIdToken();
       const apiUrl = import.meta.env.VITE_API_URL || "/api/send-summary";
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
       const res = await fetch(apiUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user.email,
-          name: user.displayName,
-          userId: user.uid,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ name: user.displayName }),
         signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       const text = await res.text();
       let data: { error?: string; message?: string } = {};
       try {
-        data = JSON.parse(text) as typeof data;
+        data = text ? (JSON.parse(text) as typeof data) : {};
       } catch {
-        console.error("Invalid JSON response", text);
         throw new Error("Respuesta inválida del servidor");
       }
       if (!res.ok) throw new Error(data.error || "Error al enviar el email");
@@ -59,15 +59,14 @@ export const EmailButton = () => {
         showToast("error", msg);
       }
     } finally {
+      clearTimeout(timeoutId);
       setSending(false);
       abortControllerRef.current = null;
     }
   };
 
   const handleCancel = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+    abortControllerRef.current?.abort();
     setSending(false);
   }, []);
 
@@ -77,28 +76,29 @@ export const EmailButton = () => {
         type="button"
         onClick={handleSend}
         disabled={sending || tasks.length === 0}
-        className="btn btn-primary inline-flex items-center gap-2 transition-transform duration-150 ease-in-out hover:scale-105 active:scale-95"
+        aria-busy={sending}
+        className="btn btn-primary inline-flex items-center gap-2 transition-transform duration-150 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {sending ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
             Enviando...
           </>
         ) : (
           <>
-            <Mail className="w-4 h-4" />
+            <Mail className="w-4 h-4" aria-hidden="true" />
             Enviar resumen por email
           </>
         )}
       </button>
-      
       {sending && (
         <button
           type="button"
           onClick={handleCancel}
-          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
+          aria-label="Cancelar envío del resumen"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 underline transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
         >
-          <XCircle className="w-4 h-4" />
+          <XCircle className="w-4 h-4" aria-hidden="true" />
           Cancelar
         </button>
       )}

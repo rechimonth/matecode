@@ -1,9 +1,10 @@
-import React from "react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TasksPage } from "../src/pages/TasksPage";
 import type { Task } from "../src/types";
+
+const { updateTask } = vi.hoisted(() => ({ updateTask: vi.fn().mockResolvedValue(undefined) }));
 
 const task: Task = {
   id: "task-1",
@@ -15,8 +16,6 @@ const task: Task = {
   updatedAt: new Date("2026-08-21T10:00:00"),
   priority: "medium",
 };
-
-const updateTask = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("../src/features/auth/AuthContext", () => ({
   useAuth: () => ({ user: { uid: "user-1", email: "user@example.com", displayName: "User", photoURL: null } }),
@@ -61,6 +60,8 @@ vi.mock("../src/components/DeleteButton", () => ({ DeleteButton: () => <button>E
 vi.mock("../src/components/ui/Toast", () => ({ useToast: () => ({ showToast: vi.fn() }) }));
 
 describe("Task edit end-to-end UI flow", () => {
+  beforeEach(() => vi.clearAllMocks());
+
   it("detects the original missing-edit regression and completes Edit → Save", async () => {
     const user = userEvent.setup();
     render(<TasksPage />);

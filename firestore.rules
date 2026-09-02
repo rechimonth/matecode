@@ -22,6 +22,8 @@ service cloud.firestore {
               || request.resource.data.priority in ['low', 'medium', 'high'])
           && (!('dueDate' in request.resource.data)
               || request.resource.data.dueDate is timestamp)
+          && (!('sortOrder' in request.resource.data)
+              || request.resource.data.sortOrder is number)
           && request.resource.data.userId == request.auth.uid;
       }
 
@@ -29,7 +31,7 @@ service cloud.firestore {
 
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly([
-          'title', 'description', 'status', 'userId', 'createdAt', 'updatedAt', 'dueDate', 'priority'
+          'title', 'description', 'status', 'userId', 'createdAt', 'updatedAt', 'dueDate', 'priority', 'sortOrder'
         ])
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp
@@ -38,7 +40,7 @@ service cloud.firestore {
       allow update: if ownsExistingTask()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'title', 'description', 'status', 'updatedAt', 'dueDate', 'priority'
+          'title', 'description', 'status', 'updatedAt', 'dueDate', 'priority', 'sortOrder'
         ])
         && request.resource.data.updatedAt is timestamp
         && validTaskData();

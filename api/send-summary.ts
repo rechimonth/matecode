@@ -35,25 +35,26 @@ function getAdminApp() {
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
   if (!serviceAccountJson) throw new Error("Server misconfiguration: Firebase service account is missing");
 
-  let serviceAccount: { project_id: string; client_email: string; private_key: string };
+  let serviceAccount: { projectId: string; clientEmail: string; privateKey: string };
   try {
-    const parsed = JSON.parse(serviceAccountJson) as Partial<typeof serviceAccount>;
-    if (!parsed.project_id || !parsed.client_email || !parsed.private_key) throw new Error("Missing service account fields");
-    serviceAccount = {
-      project_id: parsed.project_id,
-      client_email: parsed.client_email,
-      private_key: parsed.private_key.replace(/\\n/g, "\n"),
-    };
+    const parsed = JSON.parse(serviceAccountJson) as Record<string, unknown>;
+    const projectId = typeof parsed.project_id === "string" ? parsed.project_id : "";
+    const clientEmail = typeof parsed.client_email === "string" ? parsed.client_email : "";
+    const privateKey = typeof parsed.private_key === "string" ? parsed.private_key.replace(/\\n/g, "\n") : "";
+    if (!projectId || !clientEmail || !privateKey) throw new Error("Missing service account fields");
+    serviceAccount = { projectId, clientEmail, privateKey };
   } catch {
     throw new Error("Server misconfiguration: invalid Firebase service account");
   }
 
-  return initializeApp({ credential: cert(serviceAccount), projectId: serviceAccount.project_id });
+  return initializeApp({ credential: cert(serviceAccount), projectId: serviceAccount.projectId });
 }
+
 function getAdminAuth() {
   if (!adminAuth) adminAuth = getAuth(getAdminApp());
   return adminAuth;
 }
+
 function getAdminDb() {
   if (!adminDb) adminDb = getFirestore(getAdminApp());
   return adminDb;
@@ -90,9 +91,11 @@ function getHeader(req: ApiRequest, name: string): string | null {
   if (Array.isArray(value)) return value[0] ?? null;
   return null;
 }
+
 function getAllowedOrigins(): string[] {
   return (process.env.ALLOWED_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean);
 }
+
 function applyCors(res: ApiResponse, origin: string | null, allowedOrigins: string[]) {
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
@@ -180,10 +183,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     return res.status(500).json({ error: "Email service is not configured" });
   }
 
-  let tasks: Array<{ title: string; status: string; updatedAt: string }> = [];
   try {
     const snapshot = await getAdminDb().collection("tasks").where("userId", "==", decodedToken.uid).get();
-    tasks = snapshot.docs.map((document) => {
+    const tasks = snapshot.docs.map((document) => {
       const data = document.data() as FirestoreTask;
       return {
         title: typeof data.title === "string" ? data.title : "Sin título",
@@ -191,20 +193,14 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         updatedAt: toDate(data.updatedAt).toISOString(),
       };
     });
-  } catch (err) {
-    console.error("Firestore query failed", err instanceof Error ? err.message : "unknown error");
-    return res.status(500).json({ error: "Failed to fetch tasks" });
-  }
 
-  const completedCount = tasks.filter((task) => task.status === "completed").length;
-  const pendingCount = tasks.length - completedCount;
-  const taskList = tasks.length
-    ? tasks.map((task) => `<li><strong style="color:#2563eb">${escapeHtml(task.title)}</strong> - ${task.status === "completed" ? "Completada" : "Pendiente"} (${escapeHtml(new Date(task.updatedAt).toLocaleString("es-ES"))})</li>`).join("")
-    : "<li>No tenés tareas registradas.</li>";
+    const completedCount = tasks.filter((task) => task.status === "completed").length;
+    const pendingCount = tasks.length - completedCount;
+    const taskList = tasks.length
+      ? tasks.map((task) => `<li><strong style="color:#2563eb">${escapeHtml(task.title)}</strong> - ${task.status === "completed" ? "Completada" : "Pendiente"} (${escapeHtml(new Date(task.updatedAt).toLocaleString("es-ES"))})</li>`).join("")
+      : "<li>No tenés tareas registradas.</li>";
+    const bodyHtml = `<!doctype html><html lang="es"><head><meta charset="UTF-8"><title>Resumen de tareas - MateCode</title></head><body style="font-family:Inter,Arial,sans-serif;background:#f3f4f6;padding:24px"><main style="max-width:600px;margin:0 auto;background:#fff;padding:32px;border-radius:8px"><h1 style="color:#2563eb;margin-bottom:8px">Resumen de tareas - MateCode</h1><p style="color:#4b5563;margin-bottom:24px">Hola ${escapeHtml(name)}, tenés <strong>${pendingCount}</strong> tareas pendientes y <strong>${completedCount}</strong> completadas.</p><ul style="padding-left:24px;color:#1f2937;line-height:1.8">${taskList}</ul><p style="color:#6b7280;margin-top:24px;font-size:14px">MateCode Gestor de Tareas</p></main></body></html>`;
 
-  const bodyHtml = `<!doctype html><html lang="es"><head><meta charset="UTF-8"><title>Resumen de tareas - MateCode</title></head><body style="font-family:Inter,Arial,sans-serif;background:#f3f4f6;padding:24px"><main style="max-width:600px;margin:0 auto;background:#fff;padding:32px;border-radius:8px"><h1 style="color:#2563eb;margin-bottom:8px">Resumen de tareas - MateCode</h1><p style="color:#4b5563;margin-bottom:24px">Hola ${escapeHtml(name)}, tenés <strong>${pendingCount}</strong> tareas pendientes y <strong>${completedCount}</strong> completadas.</p><ul style="padding-left:24px;color:#1f2937;line-height:1.8">${taskList}</ul><p style="color:#6b7280;margin-top:24px;font-size:14px">MateCode Gestor de Tareas</p></main></body></html>`;
-
-  try {
     await ses.send(new SendEmailCommand({
       Source: fromEmail,
       Destination: { ToAddresses: [email] },
@@ -216,7 +212,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     }));
     return res.status(200).json({ message: "Email sent" });
   } catch (err) {
-    console.error("SES send failed", err instanceof Error ? err.message : "unknown error");
+    console.error("send-summary internal operation failed", err instanceof Error ? err.message : "unknown error");
     return res.status(500).json({ error: "Failed to send email" });
   }
 }

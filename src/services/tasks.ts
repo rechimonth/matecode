@@ -10,7 +10,6 @@ import {
   getDocs,
   orderBy,
   Timestamp,
-  writeBatch,
 } from "firebase/firestore";
 import { Task } from "../types";
 
@@ -49,17 +48,15 @@ export const updateTask = async (id: string, data: Partial<Pick<Task, "title" | 
 };
 
 export const reorderTasks = async (tasks: Task[]): Promise<void> => {
-  const batch = writeBatch(db);
   const timestamp = Timestamp.now();
-
-  tasks.forEach((task, index) => {
-    batch.update(doc(db, COLLECTION, task.id), {
-      sortOrder: index,
-      updatedAt: timestamp,
-    });
-  });
-
-  await batch.commit();
+  await Promise.all(
+    tasks.map((task, index) =>
+      updateDoc(doc(db, COLLECTION, task.id), {
+        sortOrder: index,
+        updatedAt: timestamp,
+      }),
+    ),
+  );
 };
 
 export const deleteTask = async (id: string): Promise<void> => {

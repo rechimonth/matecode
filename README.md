@@ -27,14 +27,13 @@ MateCode permite que un usuario autenticado cree, consulte, edite, complete y el
 - Filtros por estado.
 - Actualización optimista del estado completada/pendiente con rollback ante error.
 - Eliminación con confirmación.
-- Drag & drop visual con teclado mediante `@dnd-kit`.
+- Drag & drop con teclado mediante `@dnd-kit` y **persistencia del orden en Firestore**.
 - Envío de resumen por email mediante AWS SES desde una función serverless de Vercel.
+- Pantalla de error recuperable para fallos de arranque/renderizado, evitando una pantalla blanca silenciosa.
 
-### Importante: drag & drop y tiempo real
+### Importante: tiempo real
 
-El drag & drop **no persiste el orden en Firestore**. Es una interacción visual; al volver a consultar, las tareas se ordenan por fecha de creación.
-
-MateCode tampoco utiliza actualmente `onSnapshot`. Después de las operaciones CRUD se vuelve a consultar la colección para sincronizar el estado de la UI. Por lo tanto, el proyecto **no se describe como sincronización realtime**.
+MateCode no utiliza actualmente `onSnapshot`. Después de las operaciones CRUD se vuelve a consultar la colección para sincronizar el estado de la UI. Por lo tanto, el proyecto **no se describe como sincronización realtime**.
 
 ## Stack
 
@@ -73,6 +72,7 @@ La aplicación mantiene Context API para el estado de dominio. No se agrega Redu
 ```text
 src/
 ├─ components/
+│  ├─ AppErrorBoundary.tsx
 │  ├─ TaskItem.tsx
 │  ├─ TodoForm.tsx
 │  ├─ TodoList.tsx
@@ -114,6 +114,8 @@ Firebase Auth gestiona registro, login, Google Login, persistencia de sesión y 
 
 **DELETE:** el usuario confirma la eliminación y el documento se elimina sólo si pertenece al usuario autenticado.
 
+**REORDER:** el drag & drop reordena la colección y persiste `sortOrder` en Firestore con rollback local si la escritura falla.
+
 ## Seguridad
 
 La seguridad se implementa en varias capas:
@@ -123,13 +125,14 @@ La seguridad se implementa en varias capas:
 3. El backend verifica el token con Firebase Admin y usa únicamente `decodedToken.uid` como identidad autorizada.
 4. `body.userId` y `body.email` no son fuentes de identidad para el endpoint.
 5. Firestore Rules validan el propietario actual y evitan cambiar `userId` durante un update.
-6. La API escapa datos dinámicos antes de insertarlos en HTML de email.
-7. Las credenciales de AWS/Firebase Admin permanecen en variables de entorno del servidor.
-8. El rate limiting local se considera una defensa adicional, no un mecanismo distribuido absoluto.
+6. `sortOrder` también queda limitado a documentos del propietario mediante las mismas reglas.
+7. La API escapa datos dinámicos antes de insertarlos en HTML de email.
+8. Las credenciales de AWS/Firebase Admin permanecen en variables de entorno del servidor.
+9. El rate limiting local se considera una defensa adicional, no un mecanismo distribuido absoluto.
 
 ### Reglas de Firestore
 
-Las reglas protegen `read`, `create`, `update` y `delete`. Un update permitido debe conservar `request.auth.uid` como propietario y sólo puede modificar campos de tarea autorizados.
+Las reglas protegen `read`, `create`, `update` y `delete`. Un update permitido debe conservar `request.auth.uid` como propietario y sólo puede modificar campos de tarea autorizados, incluido `sortOrder`.
 
 ## Email
 
@@ -240,10 +243,10 @@ npm run build
 
 ## Limitaciones conocidas
 
-- El orden de drag & drop no se persiste.
 - No existe sincronización Firestore realtime por listener; la UI se refresca después de operaciones.
 - El rate limit de la función usa memoria del proceso y no sustituye un rate limiter distribuido.
 - Las pruebas automatizadas no sustituyen una prueba manual contra un proyecto Firebase/SES real.
+- Las tareas creadas antes de la introducción de `sortOrder` conservan el orden por fecha hasta que sean reordenadas.
 
 ## Decisiones técnicas
 
@@ -251,7 +254,7 @@ Se priorizaron cambios pequeños y defendibles para un proyecto académico: Reac
 
 ## Roadmap
 
-Las siguientes mejoras son futuras y no deben considerarse funcionalidades actuales: persistencia del orden, sincronización `onSnapshot`, rate limiting distribuido y una suite de integración con servicios cloud reales.
+Las siguientes mejoras son futuras y no deben considerarse funcionalidades actuales: sincronización `onSnapshot`, rate limiting distribuido y una suite de integración con servicios cloud reales.
 
 ## Licencia y autor
 

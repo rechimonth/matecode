@@ -23,6 +23,13 @@ describe("EmailButton", () => {
       useToast: () => ({ showToast: mockShowToast }),
       ToastProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     }));
+    vi.doMock("../../src/services/firebase", () => ({
+      auth: {
+        currentUser: {
+          getIdToken: vi.fn().mockResolvedValue("test-id-token"),
+        },
+      },
+    }));
   });
 
   it("renders disabled when no tasks", async () => {

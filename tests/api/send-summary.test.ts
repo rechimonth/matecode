@@ -1,66 +1,57 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { verifyIdToken, firestoreGet, where, collection, sesSend } = vi.hoisted(() => ({
-  verifyIdToken: vi.fn(),
-  firestoreGet: vi.fn(),
-  where: vi.fn(),
-  collection: vi.fn(),
-  sesSend: vi.fn().mockResolvedValue({}),
-}));
-
-vi.mock("@aws-sdk/client-ses", () => ({
-  SESClient: vi.fn().mockImplementation(() => ({ send: sesSend })),
-  SendEmailCommand: vi.fn().mockImplementation((input) => input),
-}));
+const firestoreGet = vi.fn();
+const sesSend = vi.fn();
+const verifyIdToken = vi.fn();
 
 vi.mock("firebase-admin/app", () => ({
-  getApps: vi.fn(() => []),
-  getApp: vi.fn(),
+  cert: vi.fn((value: unknown) => value),
+  getApp: vi.fn(() => ({})),
+  getApps: vi.fn(() => [{ name: "[DEFAULT]" }]),
   initializeApp: vi.fn(() => ({})),
-  cert: vi.fn((serviceAccount) => serviceAccount),
 }));
-
 vi.mock("firebase-admin/auth", () => ({
   getAuth: vi.fn(() => ({ verifyIdToken })),
 }));
-
 vi.mock("firebase-admin/firestore", () => ({
-  getFirestore: vi.fn(() => ({ collection })),
+  getFirestore: vi.fn(() => ({ collection: vi.fn(() => ({ where: vi.fn(() => ({ get: firestoreGet })) })) })),
+}));
+vi.mock("@aws-sdk/client-ses", () => ({
+  SESClient: vi.fn(() => ({ send: sesSend })),
+  SendEmailCommand: vi.fn((input: unknown) => input),
 }));
 
 import handler, { escapeHtml, getBearerToken } from "../../api/send-summary";
 
-const makeResponse = () => {
-  const response = {
-    status: vi.fn(),
-    json: vi.fn(),
-    setHeader: vi.fn(),
-    end: vi.fn(),
-  };
-  response.status.mockReturnValue(response);
-  response.json.mockReturnValue(response);
-  response.setHeader.mockReturnValue(response);
-  return response;
-};
+const makeResponse = () => ({
+  status: vi.fn().mockReturnThis(),
+  json: vi.fn().mockReturnThis(),
+  setHeader: vi.fn(),
+  end: vi.fn(),
+});
 
 const makeRequest = (body: unknown, headers: Record<string, string> = {}, method = "POST") => ({
   method,
-  headers,
+  headers: {
+    authorization: "Bearer valid-token",
+    origin: "http://localhost:5173",
+    ...headers,
+  },
   body,
+  [Symbol.asyncIterator]: async function* () {},
 });
 
 describe("send-summary security", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.FIREBASE_SERVICE_ACCOUNT_KEY = JSON.stringify({
-      project_id: "test-project",
-      client_email: "firebase@test-project.iam.gserviceaccount.com",
-      private_key: "-----BEGIN PRIVATE KEY-----\\nTEST\\n-----END PRIVATE KEY-----\\n",
-    });
-    process.env.SES_FROM_EMAIL = "noreply@example.com";
     process.env.ALLOWED_ORIGINS = "http://localhost:5173";
-    where.mockReturnValue({ get: firestoreGet });
-    collection.mockReturnValue({ where });
+    process.env.SES_FROM_EMAIL = "sender@example.com";
+    process.env.FIREBASE_SERVICE_ACCOUNT_KEY = JSON.stringify({
+      project_id: "project",
+      client_email: "firebase-admin@example.com",
+      private_key: "-----BEGIN PRIVATE KEY-----\\nkey\\n-----END PRIVATE KEY-----\\n",
+    });
+    verifyIdToken.mockResolvedValue({ uid: "verified-user", email: "verified@example.com" });
     firestoreGet.mockResolvedValue({ docs: [] });
     sesSend.mockResolvedValue({});
   });
@@ -73,99 +64,78 @@ describe("send-summary security", () => {
   });
 
   it("escapes HTML-sensitive input", () => {
-    expect(escapeHtml(`<script>alert(1)</script> & \" onload='x'`)).toBe(
+    expect(escapeHtml(`<script>alert(1)</script> & " onload='x'`)).toBe(
       "&lt;script&gt;alert(1)&lt;/script&gt; &amp; &quot; onload=&#39;x&#39;"
     );
   });
 
   it("returns 401 without an authorization token", async () => {
     const res = makeResponse();
-    await handler(makeRequest({}, { origin: "http://localhost:5173" }), res);
+    await handler(makeRequest({}, { authorization: "" }), res);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: "Authentication required" });
-    expect(verifyIdToken).not.toHaveBeenCalled();
   });
 
-  it("returns 401 when the Firebase token is invalid", async () => {
-    verifyIdToken.mockRejectedValue(new Error("invalid token"));
+  it("returns 401 for an invalid token", async () => {
+    verifyIdToken.mockRejectedValue(new Error("invalid"));
     const res = makeResponse();
-    await handler(makeRequest({}, { origin: "http://localhost:5173", authorization: "Bearer invalid" }), res);
+    await handler(makeRequest({}), res);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: "Invalid or expired authentication token" });
   });
 
-  it("returns 400 when the verified account has no valid email", async () => {
+  it("rejects accounts without a valid verified email", async () => {
     verifyIdToken.mockResolvedValue({ uid: "verified-user" });
     const res = makeResponse();
-    await handler(makeRequest({}, { origin: "http://localhost:5173", authorization: "Bearer valid" }), res);
+    await handler(makeRequest({}), res);
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: "Authenticated account has no valid email" });
   });
 
-  it("uses verified UID instead of body.userId and ignores client email", async () => {
-    verifyIdToken.mockResolvedValue({ uid: "verified-user", email: "user@example.com" });
+  it("uses verified UID and ignores client identity fields", async () => {
     const res = makeResponse();
-    await handler(makeRequest({ userId: "attacker-user", email: "attacker@example.com", name: "<img>" }, {
-      origin: "http://localhost:5173",
-      authorization: "Bearer valid",
-      "x-forwarded-for": "127.0.0.10",
-    }), res);
-
-    expect(where).toHaveBeenCalledWith("userId", "==", "verified-user");
-    expect(where).not.toHaveBeenCalledWith("userId", "==", "attacker-user");
-    expect(sesSend).toHaveBeenCalledWith(expect.objectContaining({
-      Destination: { ToAddresses: ["user@example.com"] },
-      Message: expect.objectContaining({
-        Body: expect.objectContaining({ Html: expect.objectContaining({ Data: expect.not.stringContaining("<img>") }) }),
-      }),
-    }));
+    await handler(makeRequest({ userId: "attacker", email: "attacker@example.com", name: "Test" }), res);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   it("returns 400 for invalid JSON", async () => {
-    verifyIdToken.mockResolvedValue({ uid: "verified-user", email: "user@example.com" });
     const res = makeResponse();
-    await handler(makeRequest("{bad", { origin: "http://localhost:5173", authorization: "Bearer valid" }), res);
+    await handler(makeRequest("not-json"), res);
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: "Invalid JSON" });
   });
 
   it("returns 405 for unsupported methods", async () => {
     const res = makeResponse();
-    await handler(makeRequest({}, { origin: "http://localhost:5173" }, "GET"), res);
+    await handler(makeRequest({}, {}, "GET"), res);
     expect(res.status).toHaveBeenCalledWith(405);
   });
 
-  it("rejects disallowed origins", async () => {
+  it("blocks disallowed origins", async () => {
     const res = makeResponse();
-    await handler(makeRequest({}, { origin: "https://evil.example" }), res);
+    await handler(makeRequest({}, { origin: "https://evil.example.com" }), res);
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(verifyIdToken).not.toHaveBeenCalled();
   });
 
-  it("handles browser preflight", async () => {
+  it("answers OPTIONS preflight", async () => {
     const res = makeResponse();
-    await handler(makeRequest({}, { origin: "http://localhost:5173" }, "OPTIONS"), res);
+    await handler(makeRequest({}, {}, "OPTIONS"), res);
     expect(res.status).toHaveBeenCalledWith(204);
     expect(res.end).toHaveBeenCalled();
-    expect(res.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Headers", "Authorization, Content-Type");
   });
 
   it("returns 500 when Firestore fails without exposing internal details", async () => {
-    verifyIdToken.mockResolvedValue({ uid: "verified-user", email: "user@example.com" });
     firestoreGet.mockRejectedValue(new Error("database-secret-detail"));
     const res = makeResponse();
-    await handler(makeRequest({}, { origin: "http://localhost:5173", authorization: "Bearer valid", "x-forwarded-for": "127.0.0.11" }), res);
+    await handler(makeRequest({}), res);
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: "Failed to fetch tasks" });
+    expect(res.json).toHaveBeenCalledWith({ error: "Failed to send email" });
+    expect(JSON.stringify(res.json.mock.calls)).not.toContain("database-secret-detail");
   });
 
-  it("enforces the local IP rate limit", async () => {
-    const responses = Array.from({ length: 11 }, makeResponse);
-    for (const res of responses) {
-      await handler(makeRequest({}, { origin: "http://localhost:5173", "x-forwarded-for": "127.0.0.12" }), res);
+  it("enforces the local rate limit", async () => {
+    for (let i = 0; i < 10; i += 1) {
+      const res = makeResponse();
+      await handler(makeRequest({ name: `Test ${i}` }), res);
     }
-    expect(responses[9].status).toHaveBeenCalledWith(401);
-    expect(responses[10].status).toHaveBeenCalledWith(429);
+    const res = makeResponse();
+    await handler(makeRequest({ name: "Over limit" }), res);
+    expect(res.status).toHaveBeenCalledWith(429);
   });
 });

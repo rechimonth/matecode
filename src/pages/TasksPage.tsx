@@ -26,7 +26,11 @@ export const TasksPage = () => {
           </div>
         </div>
         <div className="space-y-6">
-          <TodoForm initialTask={editingTask} onCancel={() => setEditingTask(undefined)} />
+          <TodoForm
+            key={editingTask?.id ?? "new-task"}
+            initialTask={editingTask}
+            onCancel={() => setEditingTask(undefined)}
+          />
           <TodoList onEdit={setEditingTask} />
         </div>
       </main>

@@ -9,7 +9,7 @@ import tsParser from "@typescript-eslint/parser";
 export default [
   js.configs.recommended,
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -19,11 +19,7 @@ export default [
         project: "./tsconfig.app.json",
         tsconfigRootDir: import.meta.dirname,
       },
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-        React: "readonly",
-      },
+      globals: { ...globals.browser, ...globals.node, React: "readonly" },
     },
     plugins: {
       "@typescript-eslint": tseslint,
@@ -42,6 +38,33 @@ export default [
     settings: { react: { version: "detect" } },
   },
   {
-    ignores: ["*.d.ts", "dist"],
+    files: ["tests/**/*.{ts,tsx}", "api/**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: "module",
+        ecmaFeatures: { jsx: true },
+      },
+      globals: { ...globals.browser, ...globals.node, React: "readonly" },
+    },
+    plugins: {
+      "@typescript-eslint": tseslint,
+      react,
+      reactHooks,
+      reactRefresh,
+    },
+    rules: {
+      ...tseslint.configs.recommended?.rules,
+      ...react.configs.recommended?.rules,
+      ...reactHooks.configs.recommended?.rules,
+      "react/react-in-jsx-scope": "off",
+      "react/prop-types": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+    settings: { react: { version: "detect" } },
+  },
+  {
+    ignores: ["*.d.ts", "dist", "node_modules"],
   },
 ];

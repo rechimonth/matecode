@@ -6,6 +6,10 @@ import { useToast } from "./ui/Toast";
 import { validateEmail } from "../utils/validators";
 import { Mail, Loader2, XCircle } from "lucide-react";
 
+type FirebaseUserWithIdToken = {
+  getIdToken: (forceRefresh?: boolean) => Promise<string>;
+};
+
 export const EmailButton = () => {
   const { tasks } = useTasks();
   const { user } = useAuth();
@@ -30,7 +34,10 @@ export const EmailButton = () => {
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
-      const idToken = await currentUser.getIdToken();
+      // Firebase User instances expose getIdToken(). The local adapter keeps the
+      // component compatible with the project's installed Firebase typings.
+      const tokenUser = currentUser as unknown as FirebaseUserWithIdToken;
+      const idToken = await tokenUser.getIdToken();
       const apiUrl = import.meta.env.VITE_API_URL || "/api/send-summary";
       const res = await fetch(apiUrl, {
         method: "POST",

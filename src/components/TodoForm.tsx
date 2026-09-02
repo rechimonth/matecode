@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "../features/auth/AuthContext";
 import { useTasks } from "../features/tasks/TasksContext";
 import { Task } from "../types";
@@ -24,14 +24,6 @@ export const TodoForm = ({ initialTask, onCancel }: TodoFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
   const isEditing = Boolean(initialTask);
-
-  useEffect(() => {
-    setTitle(initialTask?.title ?? "");
-    setDescription(initialTask?.description ?? "");
-    setDueDate(getInitialDueDate(initialTask));
-    setPriority(initialTask?.priority ?? "medium");
-    setError(null);
-  }, [initialTask]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +106,7 @@ export const TodoForm = ({ initialTask, onCancel }: TodoFormProps) => {
             </div>
             <div>
               <label htmlFor="task-priority" className="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
-              <select id="task-priority" className="input" name="priority" value={priority} onChange={(e) => setPriority(e.target.value as Task["priority"]) }>
+              <select id="task-priority" className="input" name="priority" value={priority} onChange={(e) => setPriority(e.target.value as Task["priority"])}>
                 <option value="low">Baja</option>
                 <option value="medium">Media</option>
                 <option value="high">Alta</option>

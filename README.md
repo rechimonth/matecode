@@ -27,11 +27,12 @@ MateCode permite que un usuario autenticado cree, consulte, edite, complete y el
 - Filtros por estado.
 - Actualización optimista del estado completada/pendiente con rollback ante error.
 - Eliminación con confirmación.
-- Drag & drop con teclado mediante `@dnd-kit` y **persistencia del orden en Firestore**.
+- Drag & drop por mouse, touch y teclado mediante `@dnd-kit`, con persistencia de `sortOrder` en Firestore.
 - Envío de resumen por email mediante AWS SES desde una función serverless de Vercel.
-- Pantalla de error recuperable para fallos de arranque/renderizado, evitando una pantalla blanca silenciosa.
 
-### Importante: tiempo real
+### Importante: drag & drop y tiempo real
+
+El drag & drop **sí persiste el orden** en Firestore mediante `sortOrder` y revierte la UI si la escritura falla.
 
 MateCode no utiliza actualmente `onSnapshot`. Después de las operaciones CRUD se vuelve a consultar la colección para sincronizar el estado de la UI. Por lo tanto, el proyecto **no se describe como sincronización realtime**.
 
@@ -114,7 +115,7 @@ Firebase Auth gestiona registro, login, Google Login, persistencia de sesión y 
 
 **DELETE:** el usuario confirma la eliminación y el documento se elimina sólo si pertenece al usuario autenticado.
 
-**REORDER:** el drag & drop reordena la colección y persiste `sortOrder` en Firestore con rollback local si la escritura falla.
+**REORDER:** el usuario puede mover tareas y el orden se persiste mediante `sortOrder`.
 
 ## Seguridad
 
@@ -125,14 +126,13 @@ La seguridad se implementa en varias capas:
 3. El backend verifica el token con Firebase Admin y usa únicamente `decodedToken.uid` como identidad autorizada.
 4. `body.userId` y `body.email` no son fuentes de identidad para el endpoint.
 5. Firestore Rules validan el propietario actual y evitan cambiar `userId` durante un update.
-6. `sortOrder` también queda limitado a documentos del propietario mediante las mismas reglas.
-7. La API escapa datos dinámicos antes de insertarlos en HTML de email.
-8. Las credenciales de AWS/Firebase Admin permanecen en variables de entorno del servidor.
-9. El rate limiting local se considera una defensa adicional, no un mecanismo distribuido absoluto.
+6. La API escapa datos dinámicos antes de insertarlos en HTML de email.
+7. Las credenciales de AWS/Firebase Admin permanecen en variables de entorno del servidor.
+8. El rate limiting local se considera una defensa adicional, no un mecanismo distribuido absoluto.
 
 ### Reglas de Firestore
 
-Las reglas protegen `read`, `create`, `update` y `delete`. Un update permitido debe conservar `request.auth.uid` como propietario y sólo puede modificar campos de tarea autorizados, incluido `sortOrder`.
+Las reglas protegen `read`, `create`, `update` y `delete`. Un update permitido debe conservar `request.auth.uid` como propietario y sólo puede modificar campos de tarea autorizados.
 
 ## Email
 
@@ -154,9 +154,17 @@ Las acciones principales usan `<button>`, labels asociados, estados `aria-presse
 
 La interfaz mantiene un diseño responsive con Tailwind CSS y controles utilizables en pantallas pequeñas.
 
+## Robustez de arranque
+
+`AppErrorBoundary` evita pantallas blancas silenciosas ante errores de renderizado/runtime y muestra un diagnóstico técnico recuperable. `main.tsx` carga `App` de forma diferida dentro del boundary.
+
+La configuración Firebase real se valida al ejecutar la aplicación. En `MODE=test` se usa una configuración ficticia para que las pruebas unitarias no dependan de secretos ni de un proyecto cloud real.
+
 ## Testing
 
-El repositorio contiene **20 archivos de prueba** después de la remediación. La suite cubre autenticación, contexto de tareas, formularios, componentes, páginas, servicios, validadores, fechas y seguridad de la API.
+El repositorio contiene **20 archivos de prueba**. La suite cubre autenticación, contexto de tareas, formularios, componentes, páginas, servicios, validadores, fechas y seguridad de la API.
+
+La última validación completa del pipeline terminó con lint, tests, typecheck y build exitosos. La suite ejecutada en CI reportó 20 archivos y 98 tests exitosos.
 
 Los escenarios críticos incluyen:
 
@@ -166,6 +174,7 @@ Los escenarios críticos incluyen:
 - Selección de tarea A → cancelación → selección de tarea B sin datos obsoletos.
 - Toggle optimista con rollback ante error.
 - Logout → login de otro usuario sin reutilizar tareas anteriores.
+- Drag & drop con persistencia de `sortOrder` y rollback.
 - API sin token → `401`.
 - API con token inválido/expirado → `401`.
 - UID verificado utilizado para Firestore.
@@ -243,10 +252,9 @@ npm run build
 
 ## Limitaciones conocidas
 
-- No existe sincronización Firestore realtime por listener; la UI se refresca después de operaciones.
+- No existe sincronización Firestore realtime por listener; la UI refresca después de operaciones CRUD.
 - El rate limit de la función usa memoria del proceso y no sustituye un rate limiter distribuido.
 - Las pruebas automatizadas no sustituyen una prueba manual contra un proyecto Firebase/SES real.
-- Las tareas creadas antes de la introducción de `sortOrder` conservan el orden por fecha hasta que sean reordenadas.
 
 ## Decisiones técnicas
 

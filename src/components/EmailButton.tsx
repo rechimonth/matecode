@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback } from "react";
-import { getIdToken } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { useTasks } from "../features/tasks/TasksContext";
 import { useAuth } from "../features/auth/AuthContext";
@@ -31,7 +30,7 @@ export const EmailButton = () => {
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
-      const idToken = await getIdToken(currentUser);
+      const idToken = await currentUser.getIdToken();
       const apiUrl = import.meta.env.VITE_API_URL || "/api/send-summary";
       const res = await fetch(apiUrl, {
         method: "POST",

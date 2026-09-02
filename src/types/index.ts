@@ -11,6 +11,7 @@ export interface Task {
   updatedAt: Date;
   dueDate?: Date;
   priority?: TaskPriority;
+  sortOrder?: number;
 }
 
 export interface AppUser {

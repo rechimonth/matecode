@@ -13,7 +13,7 @@ interface TodoFormProps {
 
 const getInitialDueDate = (task?: Task) => (task?.dueDate ? formatDateForInput(task.dueDate) : "");
 
-export const TodoForm = ({ initialTask, onCancel }: TodoFormProps) => {
+const TodoFormFields = ({ initialTask, onCancel }: TodoFormProps) => {
   const { user } = useAuth();
   const { addTask, updateTask } = useTasks();
   const [title, setTitle] = useState(initialTask?.title ?? "");
@@ -106,7 +106,7 @@ export const TodoForm = ({ initialTask, onCancel }: TodoFormProps) => {
             </div>
             <div>
               <label htmlFor="task-priority" className="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
-              <select id="task-priority" className="input" name="priority" value={priority} onChange={(e) => setPriority(e.target.value as Task["priority"])}>
+              <select id="task-priority" className="input" name="priority" value={priority} onChange={(e) => setPriority(e.target.value as Task["priority"]) }>
                 <option value="low">Baja</option>
                 <option value="medium">Media</option>
                 <option value="high">Alta</option>
@@ -127,3 +127,7 @@ export const TodoForm = ({ initialTask, onCancel }: TodoFormProps) => {
     </div>
   );
 };
+
+export const TodoForm = (props: TodoFormProps) => (
+  <TodoFormFields key={props.initialTask?.id ?? "new-task"} {...props} />
+);

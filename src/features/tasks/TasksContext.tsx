@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import { Task, TasksContextType, TaskStatus } from "../../types";
-import { createTask, updateTask as updateTaskService, deleteTask as deleteTaskService, getTasksByUser } from "../../services/tasks";
+import { createTask, updateTask as updateTaskService, deleteTask as deleteTaskService, getTasksByUser, reorderTasks } from "../../services/tasks";
 import { useAuth } from "../auth/AuthContext";
 
 const TasksContext = createContext<TasksContextType | null>(null);
@@ -94,10 +94,32 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [addLoadingTask, removeLoadingTask, tasks, user]);
 
-  const reorderTask = useCallback(async (activeId: string, _overId: string) => {
-    if (!user?.uid || !tasks.some((task) => task.id === activeId)) return;
-    await refreshTasks(user.uid);
-  }, [refreshTasks, tasks, user]);
+  const reorderTask = useCallback(async (activeId: string, overId: string) => {
+    if (!user?.uid || activeId === overId) return;
+
+    const activeIndex = tasks.findIndex((task) => task.id === activeId);
+    const overIndex = tasks.findIndex((task) => task.id === overId);
+    if (activeIndex < 0 || overIndex < 0) return;
+
+    const reordered = [...tasks];
+    const [moved] = reordered.splice(activeIndex, 1);
+    reordered.splice(overIndex, 0, moved);
+
+    const previousTasks = tasks;
+    const nextTasks = reordered.map((task, index) => ({ ...task, sortOrder: index }));
+
+    setTasks(nextTasks);
+    setError(null);
+
+    try {
+      await reorderTasks(nextTasks);
+    } catch (err) {
+      setTasks(previousTasks);
+      const message = err instanceof Error ? err.message : "Error al guardar el orden de las tareas";
+      setError(message);
+      throw err;
+    }
+  }, [tasks, user]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -110,7 +132,11 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      if (!user?.uid) return;
+      if (!user?.uid) {
+        setTasks([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {

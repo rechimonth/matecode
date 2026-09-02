@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const firestoreGet = vi.fn();
-const sesSend = vi.fn();
-const verifyIdToken = vi.fn();
+const { firestoreGet, sesSend, verifyIdToken } = vi.hoisted(() => ({
+  firestoreGet: vi.fn(),
+  sesSend: vi.fn(),
+  verifyIdToken: vi.fn(),
+}));
 
 vi.mock("firebase-admin/app", () => ({
   cert: vi.fn((value: unknown) => value),
@@ -26,7 +28,7 @@ import handler, { escapeHtml, getBearerToken } from "../../api/send-summary";
 const makeResponse = () => ({
   status: vi.fn().mockReturnThis(),
   json: vi.fn().mockReturnThis(),
-  setHeader: vi.fn(),
+  setHeader: vi.fn().mockReturnThis(),
   end: vi.fn(),
 });
 
@@ -64,7 +66,7 @@ describe("send-summary security", () => {
   });
 
   it("escapes HTML-sensitive input", () => {
-    expect(escapeHtml(`<script>alert(1)</script> & " onload='x'`)).toBe(
+    expect(escapeHtml(`<script>alert(1)</script> & \" onload='x'`)).toBe(
       "&lt;script&gt;alert(1)&lt;/script&gt; &amp; &quot; onload=&#39;x&#39;"
     );
   });

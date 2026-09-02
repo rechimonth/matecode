@@ -2,6 +2,8 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, act } from "@testing-library/react";
 
+const testUser = { uid: "u1" };
+
 vi.mock("firebase/auth", () => ({
   getAuth: vi.fn(() => ({})),
   onAuthStateChanged: vi.fn(),
@@ -30,7 +32,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 vi.mock("../src/features/auth/AuthContext", () => ({
-  useAuth: () => ({ user: { uid: "u1" } }),
+  useAuth: () => ({ user: testUser }),
   AuthProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
@@ -117,24 +119,9 @@ describe("TasksContext", () => {
 
   it("updateTask updates and refreshes", async () => {
     mockedUpdateDoc.mockResolvedValue(undefined);
-    mockedGetDocs.mockResolvedValue({
-      docs: [
-        {
-          id: "1",
-          data: () => ({
-            title: "t1",
-            description: "d1",
-            status: "pending",
-            userId: "u1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-        },
-      ],
-    });
+    mockedGetDocs.mockResolvedValue({ docs: [{ id: "1", data: () => ({ title: "t1", description: "d1", status: "pending", userId: "u1", createdAt: new Date(), updatedAt: new Date() }) }] });
 
     render(<TasksProvider><TestConsumer /></TasksProvider>);
-
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("update").click());
     expect(mockedUpdateDoc).toHaveBeenCalled();
@@ -142,24 +129,9 @@ describe("TasksContext", () => {
 
   it("deleteTask deletes and refreshes", async () => {
     mockedDeleteDoc.mockResolvedValue(undefined);
-    mockedGetDocs.mockResolvedValue({
-      docs: [
-        {
-          id: "1",
-          data: () => ({
-            title: "t1",
-            description: "d1",
-            status: "pending",
-            userId: "u1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-        },
-      ],
-    });
+    mockedGetDocs.mockResolvedValue({ docs: [{ id: "1", data: () => ({ title: "t1", description: "d1", status: "pending", userId: "u1", createdAt: new Date(), updatedAt: new Date() }) }] });
 
     render(<TasksProvider><TestConsumer /></TasksProvider>);
-
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("delete").click());
     expect(mockedDeleteDoc).toHaveBeenCalled();
@@ -167,48 +139,18 @@ describe("TasksContext", () => {
 
   it("toggleTaskStatus toggles and refreshes", async () => {
     mockedUpdateDoc.mockResolvedValue(undefined);
-    mockedGetDocs.mockResolvedValue({
-      docs: [
-        {
-          id: "1",
-          data: () => ({
-            title: "t1",
-            description: "d1",
-            status: "pending",
-            userId: "u1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-        },
-      ],
-    });
+    mockedGetDocs.mockResolvedValue({ docs: [{ id: "1", data: () => ({ title: "t1", description: "d1", status: "pending", userId: "u1", createdAt: new Date(), updatedAt: new Date() }) }] });
 
     render(<TasksProvider><TestConsumer /></TasksProvider>);
-
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("toggle").click());
     expect(mockedUpdateDoc).toHaveBeenCalled();
   });
 
   it("reorderTask refreshes tasks", async () => {
-    mockedGetDocs.mockResolvedValue({
-      docs: [
-        {
-          id: "1",
-          data: () => ({
-            title: "t1",
-            description: "d1",
-            status: "pending",
-            userId: "u1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-        },
-      ],
-    });
+    mockedGetDocs.mockResolvedValue({ docs: [{ id: "1", data: () => ({ title: "t1", description: "d1", status: "pending", userId: "u1", createdAt: new Date(), updatedAt: new Date() }) }] });
 
     render(<TasksProvider><TestConsumer /></TasksProvider>);
-
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     await act(async () => screen.getByText("reorder").click());
     expect(mockedGetDocs).toHaveBeenCalled();
@@ -217,33 +159,12 @@ describe("TasksContext", () => {
   it("statusFilter filters tasks", async () => {
     mockedGetDocs.mockResolvedValue({
       docs: [
-        {
-          id: "1",
-          data: () => ({
-            title: "t1",
-            description: "d1",
-            status: "pending",
-            userId: "u1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-        },
-        {
-          id: "2",
-          data: () => ({
-            title: "t2",
-            description: "d2",
-            status: "completed",
-            userId: "u1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-        },
+        { id: "1", data: () => ({ title: "t1", description: "d1", status: "pending", userId: "u1", createdAt: new Date(), updatedAt: new Date() }) },
+        { id: "2", data: () => ({ title: "t2", description: "d2", status: "completed", userId: "u1", createdAt: new Date(), updatedAt: new Date() }) },
       ],
     });
 
     render(<TasksProvider><TestConsumer /></TasksProvider>);
-
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     expect(screen.getByTestId("count").textContent).toBe("2");
     await act(async () => screen.getByText("filter").click());
@@ -254,7 +175,6 @@ describe("TasksContext", () => {
     mockedGetDocs.mockRejectedValue(new Error("load-fail"));
 
     render(<TasksProvider><TestConsumer /></TasksProvider>);
-
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("ready"));
     expect(screen.getByTestId("error").textContent).toBe("load-fail");
     await act(async () => screen.getByText("clear").click());

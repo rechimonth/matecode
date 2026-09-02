@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Header } from "../components/Header";
 import { TodoForm } from "../components/TodoForm";
 import { TodoList } from "../components/TodoList";
@@ -26,11 +26,14 @@ export const TasksPage = () => {
           </div>
         </div>
         <div className="space-y-6">
-          <TodoForm initialTask={editingTask} onCancel={() => setEditingTask(undefined)} />
-          <TodoList />
+          <TodoForm
+            key={editingTask?.id ?? "new-task"}
+            initialTask={editingTask}
+            onCancel={() => setEditingTask(undefined)}
+          />
+          <TodoList onEdit={setEditingTask} />
         </div>
       </main>
     </div>
   );
 };
-

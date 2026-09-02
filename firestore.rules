@@ -2,9 +2,50 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /tasks/{taskId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      function signedIn() {
+        return request.auth != null;
+      }
+
+      function ownsExistingTask() {
+        return signedIn() && resource.data.userId == request.auth.uid;
+      }
+
+      function validTaskData() {
+        return request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 120
+          && request.resource.data.description is string
+          && request.resource.data.description.size() > 0
+          && request.resource.data.description.size() <= 2000
+          && request.resource.data.status in ['pending', 'completed']
+          && (!('priority' in request.resource.data)
+              || request.resource.data.priority in ['low', 'medium', 'high'])
+          && (!('dueDate' in request.resource.data)
+              || request.resource.data.dueDate is timestamp)
+          && (!('sortOrder' in request.resource.data)
+              || request.resource.data.sortOrder is number)
+          && request.resource.data.userId == request.auth.uid;
+      }
+
+      allow read: if ownsExistingTask();
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'title', 'description', 'status', 'userId', 'createdAt', 'updatedAt', 'dueDate', 'priority', 'sortOrder'
+        ])
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && validTaskData();
+
+      allow update: if ownsExistingTask()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title', 'description', 'status', 'updatedAt', 'dueDate', 'priority', 'sortOrder'
+        ])
+        && request.resource.data.updatedAt is timestamp
+        && validTaskData();
+
+      allow delete: if ownsExistingTask();
     }
   }
 }

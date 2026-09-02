@@ -5,6 +5,7 @@ import { TasksProvider } from "./features/tasks/TasksContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { PublicRoute } from "./routes/PublicRoute";
 import { ToastProvider } from "./components/ui/Toast";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 
 const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({ default: m.RegisterPage })));
@@ -22,17 +23,19 @@ const AppRoutes = () => (
 );
 
 const App = () => (
-  <BrowserRouter>
-    <ToastProvider>
-      <AuthProvider>
-        <TasksProvider>
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><p className="text-gray-600">Cargando...</p></div>}>
-            <AppRoutes />
-          </Suspense>
-        </TasksProvider>
-      </AuthProvider>
-    </ToastProvider>
-  </BrowserRouter>
+  <AppErrorBoundary>
+    <BrowserRouter>
+      <ToastProvider>
+        <AuthProvider>
+          <TasksProvider>
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><p className="text-gray-600">Cargando...</p></div>}>
+              <AppRoutes />
+            </Suspense>
+          </TasksProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </BrowserRouter>
+  </AppErrorBoundary>
 );
 
 export default App;

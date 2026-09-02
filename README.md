@@ -153,7 +153,7 @@ La interfaz mantiene un diseño responsive con Tailwind CSS y controles utilizab
 
 ## Testing
 
-El repositorio contiene **19 archivos de prueba** después de la remediación. La suite cubre autenticación, contexto de tareas, formularios, componentes, páginas, servicios, validadores, fechas y seguridad de la API.
+El repositorio contiene **20 archivos de prueba** después de la remediación. La suite cubre autenticación, contexto de tareas, formularios, componentes, páginas, servicios, validadores, fechas y seguridad de la API.
 
 Los escenarios críticos incluyen:
 
@@ -196,7 +196,6 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
-VITE_API_URL=
 ```
 
 ### Serverless / Vercel
@@ -207,7 +206,7 @@ AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 SES_FROM_EMAIL=
 SES_CONFIGURATION_SET=
-ALLOWED_ORIGINS=https://tu-app.vercel.app
+ALLOWED_ORIGINS=https://matecode-lyart.vercel.app
 FIREBASE_SERVICE_ACCOUNT_KEY=
 ```
 

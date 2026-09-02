@@ -10,29 +10,33 @@ import {
   getDocs,
   orderBy,
   Timestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { Task } from "../types";
 
 const COLLECTION = "tasks";
 
+type FirestoreDateLike = { toDate: () => Date };
+
 const toDate = (value: unknown): Date => {
-  if (typeof value === "object" && value !== null && "toDate" in value && typeof (value as { toDate: () => Date }).toDate === "function") {
-    return (value as { toDate: () => Date }).toDate();
+  if (typeof value === "object" && value !== null && "toDate" in value && typeof (value as FirestoreDateLike).toDate === "function") {
+    return (value as FirestoreDateLike).toDate();
   }
   if (value instanceof Date) return value;
   return new Date(value as string);
 };
 
 export const createTask = async (task: Omit<Task, "id" | "createdAt" | "updatedAt">): Promise<string> => {
+  const now = Timestamp.now();
   const ref = await addDoc(collection(db, COLLECTION), {
     ...task,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
+    createdAt: now,
+    updatedAt: now,
   });
   return ref.id;
 };
 
-export const updateTask = async (id: string, data: Partial<Pick<Task, "title" | "description" | "status" | "dueDate" | "priority">>): Promise<void> => {
+export const updateTask = async (id: string, data: Partial<Pick<Task, "title" | "description" | "status" | "dueDate" | "priority" | "sortOrder">>): Promise<void> => {
   const taskRef = doc(db, COLLECTION, id);
   const payload: Record<string, unknown> = {
     ...data,
@@ -44,6 +48,20 @@ export const updateTask = async (id: string, data: Partial<Pick<Task, "title" | 
   await updateDoc(taskRef, payload);
 };
 
+export const reorderTasks = async (tasks: Task[]): Promise<void> => {
+  const batch = writeBatch(db);
+  const timestamp = Timestamp.now();
+
+  tasks.forEach((task, index) => {
+    batch.update(doc(db, COLLECTION, task.id), {
+      sortOrder: index,
+      updatedAt: timestamp,
+    });
+  });
+
+  await batch.commit();
+};
+
 export const deleteTask = async (id: string): Promise<void> => {
   const taskRef = doc(db, COLLECTION, id);
   await deleteDoc(taskRef);
@@ -52,7 +70,7 @@ export const deleteTask = async (id: string): Promise<void> => {
 export const getTasksByUser = async (userId: string): Promise<Task[]> => {
   const q = query(collection(db, COLLECTION), where("userId", "==", userId), orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => {
+  const tasks = snapshot.docs.map((d) => {
     const data = d.data();
     return {
       id: d.id,
@@ -64,6 +82,14 @@ export const getTasksByUser = async (userId: string): Promise<Task[]> => {
       updatedAt: toDate(data.updatedAt),
       dueDate: data.dueDate ? toDate(data.dueDate) : undefined,
       priority: data.priority,
+      sortOrder: typeof data.sortOrder === "number" ? data.sortOrder : undefined,
     } as Task;
+  });
+
+  return tasks.sort((a, b) => {
+    if (a.sortOrder !== undefined && b.sortOrder !== undefined) return a.sortOrder - b.sortOrder;
+    if (a.sortOrder !== undefined) return -1;
+    if (b.sortOrder !== undefined) return 1;
+    return b.createdAt.getTime() - a.createdAt.getTime();
   });
 };
